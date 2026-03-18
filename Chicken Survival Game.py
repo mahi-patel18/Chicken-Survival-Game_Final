@@ -79,16 +79,19 @@ def load_image(filename, w, h):
     return pygame.transform.scale(image, (w, h))
 
 images = {
-    "mahi":   load_image("mahi.png",   60, 60),
-    "hilly":  load_image("hilly.png",  60, 60),
-    "august": load_image("august.png", 60, 60),
-    "leo":    load_image("leo.png",    60, 60),
-    "raj":    load_image("raj.png",    60, 60),
-    "corn":   load_image("corn.png",   35, 50),
-    "egg":    load_image("egg.png",    30, 30),
-    "nest":   load_image("nest.png",   90, 44),
-    "water":  load_image("water.png",  80, 52),
-    "fence":  load_image("fence.png",  90, 63),
+    "mahi":   load_image("mahi.png",60, 60),
+    "hilly":  load_image("hilly.png",60, 60),
+    "august": load_image("august.png",60, 60),
+    "leo":    load_image("leo.png",60, 60),
+    "raj":    load_image("raj.png",60, 60),
+    "corn":   load_image("corn.png",35, 50),
+    "egg":    load_image("egg.png",30, 30),
+    "nest":   load_image("nest.png",90, 44),
+    "water":  load_image("water.png",80, 52),
+    "fence":  load_image("fence.png",90, 63),
+    "bomb":   load_image("bomb.png",20, 20),
+    "fox":    load_image("fox.png",60, 60),
+    "farmer": load_image("farmer.png",60, 60),
 }
 
 font_big = pygame.font.SysFont("Arial", 48, bold=True)  # big font for titles
