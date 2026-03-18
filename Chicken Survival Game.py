@@ -125,6 +125,33 @@ def draw_select():
 
     # draw hint at bottom
     screen.blit(font_small.render("← → to browse, then ENTER to play", True, WHITE), (220, 380)) # hint text
+
+def draw_gameover(): 
+    
+def draw_hud(): 
+    
+def draw_game():
 #person 3 – player movement + stats
+def make_player():
+
+def move_player():
+
+def drain_stats():
+
+def try_lay_eggs():
+
+def carry_to_nest():
 #person 4 – items + collisions
+def spawn_corn():
+
+def disappear_corn():
+
+def check_water():  #if the player is touching the water
+
+def check_fence(): #if the player is touching the fence
+
+def check_nest(): #if the player is touching the nest
 #person 5 – main game loop + screens
+def pop_up_message():
+
+def start_game():
