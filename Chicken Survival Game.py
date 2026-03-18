@@ -90,8 +90,8 @@ images = {
     "water":  load_image("water.png",80, 52),
     "fence":  load_image("fence.png",90, 63),
     "bomb":   load_image("bomb.png",20, 20),
-    "fox":    load_image("fox.png",60, 60),
-    "farmer": load_image("farmer.png",60, 60),
+    "fox":    load_image("fox.png",60, 70),
+    "farmer": load_image("farmer.png",60, 80),
 }
 
 font_big = pygame.font.SysFont("Arial", 48, bold=True)  # big font for titles
