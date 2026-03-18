@@ -151,6 +151,18 @@ def check_water():  #if the player is touching the water
 def check_fence(): #if the player is touching the fence
 
 def check_nest(): #if the player is touching the nest
+
+def move_fox()        # chases the chicken
+
+def check_fox()       # if fox touches the chicken = take damage
+
+def move_farmer()     # patrols left and right
+
+def check_farmer()    # if farmer touches the chicken = take damage or die
+
+def make_bomb()       # creates a bomb at a position
+
+def check_bomb()      # if chicken walkes over the bomb = explode = die
 #person 5 – main game loop + screens
 def pop_up_message():
 
