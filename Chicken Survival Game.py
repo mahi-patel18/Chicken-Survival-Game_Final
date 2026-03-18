@@ -172,7 +172,67 @@ def make_player():
     return player
 
 def move_player():
+    #geeksforgeeks.org/python/python-moving-an-object-in-pygame
+    keys = pygame.key.get_pressed()
 
+    # check which direction keys are pressed
+    direction_x = 0   # left and right  
+    direction_y = 0   # up and down 
+
+    #for both arrow keys and WASD
+    if keys[pygame.K_LEFT]  or keys[pygame.K_a]:
+        direction_x = -1              # moving left
+        player["facing_left"] = True  # face left(for the flip of the image)
+
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+        direction_x = 1               # moving right
+        player["facing_left"] = False # face right(for the flip of the image)
+
+    if keys[pygame.K_UP]    or keys[pygame.K_w]:
+        direction_y = -1              # moving up
+
+    if keys[pygame.K_DOWN]  or keys[pygame.K_s]:
+        direction_y = 1               # moving down
+
+    #check if chicken is moving at all
+    player["moving"] = direction_x != 0 or direction_y != 0
+
+    #for diagnal
+    #https://gamedev.stackexchange.com/questions/104437/diagonal-movement-with-pygame-rect-class
+    #right + down = √(10² + 10²) = 14.1 total speed but we are doing right+down  = √(7.07² + 7.07²) = 10 which makes it equal
+    if direction_x != 0 and direction_y != 0:
+        direction_x = direction_x * 0.707
+        direction_y = direction_y * 0.707
+
+    # slow down when energy is low
+    current_speed = player["speed"]
+
+    if player["energy"] < 20:
+        current_speed = current_speed * 0.45   # very slow 
+    elif player["energy"] < 50:
+        current_speed = current_speed * 0.70   # a bit slow
+
+    # position BEFORE moving 
+    #need it so check_fence() can push chicken back if it hits a fence
+    player["previous_x"] = player["x"]
+    player["previous_y"] = player["y"]
+
+    #actually moves the chicken
+    #new position = old position + directionxspeedxtime
+    #multiplying by dt makes movement the same speed on every computer
+    #eg 60(normal speed set in game)+ 1(presed 1 right) * 180(chick speed) * dt
+    player["x"] = player["x"] + direction_x * current_speed * dt
+    player["y"] = player["y"] + direction_y * current_speed * dt
+
+    #stops the chicken from walking off screen
+    if player["x"] < 0:
+        player["x"] = 0    #stop at left edge
+    if player["x"] > W - 60:
+        player["x"] = W - 60    #stop at right edge
+    if player["y"] < 60:
+        player["y"] = 60    #stop at top edge (btw 60 is the HUD height)
+    if player["y"] > H - 60:
+        player["y"] = H - 60    #stop at bottom edge
 def drain_stats():
 
 def try_lay_eggs():
