@@ -3,11 +3,17 @@ import sys
 import os
 import random
 
+pygame.init()
+
 #person 1 – setup + constants (dictionaries etc)
 #Screen size
 W = 800 # game width in pixels
 H = 600 # game height in pixels
 FPS = 60 # frames per second
+
+screen = pygame.display.set_mode((W, H))        # opens the game window
+pygame.display.set_caption("Chicken Survival Game")       # sets the title bar text
+clock  = pygame.time.Clock()                     # controls the FPS
 
 PLAYER_SPEED  = 180  #Pxels per second — same for all chicks
 PLAYER_HEALTH = 100  #Starting health
@@ -84,10 +90,6 @@ images = {
     "water":  load_image("water.png",  80, 52),
     "fence":  load_image("fence.png",  90, 63),
 }
-
-screen = pygame.display.set_mode((W, H))        # opens the game window
-pygame.display.set_caption("Chicken Survival Game")       # sets the title bar text
-clock  = pygame.time.Clock()                     # controls the FPS
 
 font_big = pygame.font.SysFont("Arial", 48, bold=True)  # big font for titles
 font_medium = pygame.font.SysFont("Arial", 22, bold=True)  # medium font for HUD
