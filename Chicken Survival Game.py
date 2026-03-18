@@ -98,9 +98,10 @@ def draw_title():
     screen.fill(SKY)                                                         # paints background blue
     screen.blit(font_big.render("CHICKEN GAME",       True, WHITE), (200, 200))  # draws title
     screen.blit(font_medium.render("Press ENTER to start", True, WHITE), (250, 320)) # draws hint
+    
+selected_chick = 0
 
 def draw_select():
-    selected_chick = 0
     screen.fill(SKY)                                                                    # blue background
 
     # title
