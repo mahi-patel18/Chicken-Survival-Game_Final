@@ -138,6 +138,38 @@ def draw_hud():
 def draw_game():
 #person 3 – player movement + stats
 def make_player():
+    # creates a new player dictionary with all starting values
+    player = {
+        #position
+        "x":               60.0,    # starting position from left
+        "y":               500.0,    # starting position from top
+        "previous_x":      60.0,    # saves last position before moving  
+        "previous_y":      500.0,    # saves last position before moving 
+
+        #movement
+        "speed":           180.0,    # how fast the chicken moves in pixels per second
+        "facing_left":     True,    # is the chicken facing left?
+        "moving":          False,    # is the chicken moving right now?
+
+        #HUD stats
+        "health":          100.0,    # starts at 100, game over when 0
+        "hunger":          100.0,    # starts at 100, drains over time
+        "energy":          100.0,    # starts at 100, drains when moving
+
+        #egg
+        "carrying_egg":    False,    # is the chicken holding an egg?
+        "egg_cooldown":    0.0,    # cooldown before chicken can lay again
+        "eggs_delivered":  0,    # how many eggs delivered to nest so far
+
+        #timer
+        "hunger_timer":    0.0,    # counts up to 5 seconds then hunger drops
+        "standing_timer":  0.0,    # counts how long chicken has been standing still
+
+        #selected chick id
+        "chick_id":        Players[selected_chick]["id"],  # which chick image to use
+    }
+
+    return player
 
 def move_player():
 
