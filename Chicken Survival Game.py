@@ -100,6 +100,7 @@ def draw_title():
     screen.blit(font_medium.render("Press ENTER to start", True, WHITE), (250, 320)) # draws hint
 
 def draw_select():
+    selected_chick = 0
     screen.fill(SKY)                                                                    # blue background
 
     # title
