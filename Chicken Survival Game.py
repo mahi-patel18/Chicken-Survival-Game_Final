@@ -143,8 +143,28 @@ def draw_select():
 def draw_gameover():
 
 
-def draw_hud():
+def draw_bar(surface, fonts, x, y, value, max_value, color, label):
+    BAR_WIDTH  = 150
+    BAR_HEIGHT = 14
 
+    pygame.draw.rect(screen, (80, 80, 80), (x, y, BAR_WIDTH, BAR_HEIGHT))
+    fill_width = int(BAR_WIDTH * value/max_value)
+    label_surf = fonts["small"].render(label, True, WHITE)
+    surface.blit(label_surf, (x, y -20))
+    if fill_width > 0:
+        pygame.draw.rect(surface, color, (x, y, fill_width, BAR_HEIGHT))
+    pygame.draw.rect(surface, (255, 255, 255), (x, y, BAR_WIDTH, BAR_HEIGHT), 1)
+
+def draw_hud(screen, fonts, health, hunger, energy, time_left, eggs, eggs_needed):
+    pygame.draw.rect(screen, (40,40,40),(0, 0, W, 50))
+    draw_bar(screen, fonts,20, 25, health,100, GRASS,'HEALTH')
+    draw_bar(screen, fonts, 200,25, hunger, 100, ORANGE,'HUNGER')
+    draw_bar(screen, fonts, 380,25,energy,100, YELLOW,'ENERGY')
+#timer
+    col = RED if time_left < 20 else WHITE
+    screen.blit(fonts["small"].render(f"Time: {int(time_left)}s", True, col), (W - 120, 8))
+#eggs
+    screen.blit(fonts["small"].render(f"Eggs:{eggs}/{eggs_needed}", True, WHITE), (W-120, 28))
 
 def draw_game():
 
@@ -322,4 +342,3 @@ def pop_up_message():
 
 
 def start_game():
-
