@@ -166,9 +166,6 @@ def draw_hud(screen, fonts, health, hunger, energy, time_left, eggs, eggs_needed
 #eggs
     screen.blit(fonts["small"].render(f"Eggs:{eggs}/{eggs_needed}", True, WHITE), (W-120, 28))
 
-def draw_game():
-
-
 # person 3 – player movement + stats
 def make_player():
     # creates a new player dictionary with all starting values
@@ -338,7 +335,5 @@ def check_bomb():
                 pop_up_message("BOOM! -30 health!")
 
 # person 5 – main game loop + screens
-def pop_up_message():
-
 
 def start_game():
