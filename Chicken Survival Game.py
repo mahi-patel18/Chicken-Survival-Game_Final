@@ -301,25 +301,74 @@ def disappear_corn():
     pass
 
 def check_water():  # if the player is touching the water
-    pass
+    global player
+    # water position
+    chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
+    water_rect = pygame.Rect(water["x"], water["y"], 80, 52)
+
+    if chicken_rect.colliderect(water_rect):
+        # Refill energy up to 100
+        player["energy"] = min(100.0, player["energy"] + 40.0)
+        pop_up_message("Refreshing!!! + 40 energy")
+
 
 def check_fence():  # if the player is touching the fence
-    pass
+    global player
+    chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
+    for fence in fences:
+        fence_rect = pygame.Rect(fence["x"], fence["y"], 90, 63)
+        if chicken_rect.colliderect(fence_rect):
+            # Revert to original position before moving
+            player["x"] = player["previous_x"]
+            player["y"] = player["previous_y"]
+            break # only one collision needed to stop the movement
+
 
 def check_nest():  # if the player is touching the nest
-    pass
+    global player
+    nest_rect = pygame.Rect(600, 500, 90, 44)
+    chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
+    if chicken_rect.colliderect(nest_rect):
+        if player["carrying_egg"]:
+            player["carrying_egg"] = False
+            player["eggs_delivered"] += 1
+            pop_up_message("Eggy delivered!!")
+
 
 def move_fox()  # chases the chicken
-    pass
 
-def check_fox()  # if fox touches the chicken = take damage
-    pass
+
+def check_fox():  # if fox touches the chicken = take damage
+    global player
+    chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
+    fox_rect = pygame.Rec(fox["x"], fox["y"], 60, 70)
+
+    if chicken_rect.colliderect(fox_rect):
+        # only deal dmg when hit cooldown expire
+        if fox["hit_cooldown"] <= 0:
+            player["heath"] -= 20
+            if player["health"] < 0:
+                player["health"] = 0
+            fox["hit_cooldown"] = 1.5 # seconds before fox bite again
+            pop_up_message("The fox bit you:(! -20 health!")
+
+
 
 def move_farmer()  # patrols left and right
-    pass
 
-def check_farmer()  # if farmer touches the chicken = take damage or die
-    pass
+
+def check_farmer():  # if farmer touches the chicken = take damage or die
+    global player, farmer
+    chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
+    farmer_rect = pygame.Rect(farmer["x"], farmer["y"], 60, 80)
+
+    if chicken_rect.colliderect(farmer_rect):
+        if farmer["hit_cooldown"] <= 0:
+            player["health"] -= 35
+            if player["health"] < 0:
+                player["health"] = 0
+            farmer["hit_cooldown"] = 1.5 # seconds before farmer can hit again
+            pop_up_message("The big bad farmer caught you! -35 health!")
 
 def make_bomb():
     # creates a bomb at a random position on the map
