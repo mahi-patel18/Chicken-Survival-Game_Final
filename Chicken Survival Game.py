@@ -265,41 +265,61 @@ def move_player():
         player["y"] = H - 60    #stop at bottom edge
 
 def drain_stats():
+    global player, dt
+
+    # egg cooldown counts down to 0
+    if player["egg_cooldown"] > 0:
+        player["egg_cooldown"] = max(0.0, player["egg_cooldown"] - dt)
+
+    # hunger decreases by 2 every 5 seconds
+    player["hunger_timer"] += dt
+    if player["hunger_timer"] >= 5.0:
+        player["hunger_timer"] -= 5.0
+        player["hunger"] = max(0.0, player["hunger"] - 2.0)
+
+    # if starving, lose health
+    if player["hunger"] == 0:
+        player["health"] = max(0.0, player["health"] - 2.0 * dt)
+
+    # energy drains when moving
+    if player["moving"]:
+        player["energy"] = max(0.0, player["energy"] - (1.0 / FPS))
+        player["standing_timer"] = 0.0
 
 
 def try_lay_eggs():
-
+    pass
 
 def carry_to_nest():
-
+    pass
 
 # person 4 – items + collisions
 def spawn_corn():
-
+    pass
 
 def disappear_corn():
-
+    pass
 
 def check_water():  # if the player is touching the water
-
+    pass
 
 def check_fence():  # if the player is touching the fence
-
+    pass
 
 def check_nest():  # if the player is touching the nest
-
+    pass
 
 def move_fox()  # chases the chicken
-
+    pass
 
 def check_fox()  # if fox touches the chicken = take damage
-
+    pass
 
 def move_farmer()  # patrols left and right
-
+    pass
 
 def check_farmer()  # if farmer touches the chicken = take damage or die
-
+    pass
 
 def make_bomb():
     # creates a bomb at a random position on the map
