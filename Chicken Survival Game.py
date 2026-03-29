@@ -466,7 +466,7 @@ def move_fox() -> None:
     if fox["hit_cooldown"] > 0:
         fox["hit_cooldown"] = max(0.0, fox["hit_cooldown"] - dt)
 
-def check_fox():
+def make_fox_follow():
     global player, fox
     if fox is None:
         return
@@ -524,7 +524,7 @@ def make_bomb():
         "damage": 30
     }
 
-def check_bomb():
+def take_bomb_damage():
     global player, bombs
     for bomb in bombs:
         if bomb["alive"]:
@@ -625,14 +625,14 @@ def start_game():
             drain_stats()
             check_fence()
             check_water()
-            check_bomb()
+            take_bomb_damage()
 
             if farmer is not None:
                 move_farmer()
                 check_farmer()
 
             if fox is not None:
-                check_fox()
+                make_fox_follow()
 
             if popup_timer > 0:
                 popup_timer -= dt
