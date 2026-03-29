@@ -1,78 +1,127 @@
-import dt
 import pygame
 import sys
-import os
 import random
 
 pygame.init()
 
-# person 1 – setup + constants (dictionaries etc)
-# Screen size
-W = 800  # game width in pixels
-H = 600  # game height in pixels
-FPS = 60  # frames per second
+#setup + constants (dictionaries etc)
+#Screen size
+W = 800  #game width in pixels
+H = 600  #game height in pixels
+FPS = 60  #frames per second
 
-screen = pygame.display.set_mode((W, H))  # opens the game window
-pygame.display.set_caption("Chicken Survival Game")  # sets the title bar text
-clock = pygame.time.Clock()  # controls the FPS
+screen = pygame.display.set_mode((W, H))  #opens the game window
+pygame.display.set_caption("Chicken Survival Game")  #sets the title bar text
+clock = pygame.time.Clock()  #controls the FPS
 
-PLAYER_SPEED = 180  # Pixels per second — same for all chicks
-PLAYER_HEALTH = 100  # Starting health
-PLAYER_HUNGER = 100  # Starting hunger
-PLAYER_ENERGY = 100  # Starting energy
-EGG_COOLDOWN = 7  # Seconds between laying eggs
-bombs = []  # list of all bombs on the map
+PLAYER_SPEED  = 180
+PLAYER_HEALTH = 100
+PLAYER_HUNGER = 100
+PLAYER_ENERGY = 100
+EGG_COOLDOWN  = 7
 
-# Colors for future use
+bombs  = []
+waters = []
+fences = []
+
+popup_msg   = ""
+popup_timer = 0.0
+
+state          = "title"
+player         = None
+dt             = 0.0
+selected_chick = 0
+level_timer    = 0.0
+level_count    = 0
+fox            = None
+farmer         = None
+
+#Colors for future use
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-RED = (220, 50, 50)  # Health bar
-YELLOW = (245, 230, 50)  # Energy warning
-ORANGE = (230, 130, 40)  # Hunger warning
+RED = (220, 50, 50)  #Health bar
+YELLOW = (245, 230, 50)  #Energy warning
+ORANGE = (230, 130, 40)  #Hunger warning
 GREEN = (80, 180, 80)
 DARK_GREEN = (40, 120, 40)
 SKY = (135, 206, 235)
 GRASS = (126, 200, 80)
 BROWN = (160, 100, 50)
 GRAY = (150, 150, 150)
-DARK_GRAY = (50, 50, 50)  # Stats background
+DARK_GRAY = (50, 50, 50)  #Stats background
 PINK = (225, 127, 162)
 
-# Data for Chicken
+#Data for Chicken
 Players = [
-    {
-        "id": "mahi", "name": "Mahi Chick", "image": "mahi.png"
-    },
-    {
-        "id": "hilly", "name": "Hilly Chick", "image": "hilly.png"
-    },
-    {
-        "id": "august", "name": "August Chick", "image": "august.png"
-    },
-
-    {
-        "id": "leo", "name": "Leo Chick", "image": "leo.png"
-    },
-
-    {
-        "id": "raj", "name": "Raj Chick", "image": "raj.png"
-    },
+    {"id": "mahi",   "name": "Mahi Chick",   "image": "mahi.png"},
+    {"id": "hilly",  "name": "Hilly Chick",  "image": "hilly.png"},
+    {"id": "august", "name": "August Chick", "image": "august.png"},
+    {"id": "leo",    "name": "Leo Chick",    "image": "leo.png"},
+    {"id": "raj",    "name": "Raj Chick",    "image": "raj.png"},
 ]
 
-# Data for each level
+#Data for each level
 Levels = [
     {
-        # Level 1: Easy(Example btw)
         "level": 1,
         "eggs_needed": 1,
-        "time_limit": 150,  # Seconds
+        "time_limit": 120,
+        "has_fox": True,
+        "has_farmer": True,
+        "bomb_count": 3,
+        "fence_count": 3,
+        "water_count": 2,
+        "corn_max": 5,
+        "bg_color": GRASS,
+    },
+    {
+        "level": 2,
+        "eggs_needed": 2,
+        "time_limit": 120,
         "has_fox": False,
         "has_farmer": False,
-        "has_bomb": False,
+        "bomb_count": 10,
+        "fence_count": 3,
+        "water_count": 5,
         "corn_max": 5,
-        "bg_color": GRASS,  # Background color for this level
+        "bg_color": GRASS,
     },
-    # copy this block for each level
+    {
+        "level": 3,
+        "eggs_needed": 3,
+        "time_limit": 100,
+        "has_fox": True,
+        "has_farmer": False,
+        "bomb_count": 12,
+        "fence_count": 4,
+        "water_count": 5,
+        "corn_max": 5,
+        "bg_color": GRASS,
+    },
+    {
+        "level": 4,
+        "eggs_needed": 4,
+        "time_limit": 80,
+        "has_fox": False,
+        "has_farmer": True,
+        "bomb_count": 12,
+        "fence_count": 4,
+        "water_count": 5,
+        "corn_max": 5,
+        "bg_color": GRASS,
+    },
+    {
+        "level": 5,
+        "eggs_needed": 5,
+        "time_limit": 60,
+        "has_fox": True,
+        "has_farmer": True,
+        "bomb_count": 15,
+        "fence_count": 4,
+        "water_count": 5,
+        "corn_max": 5,
+        "bg_color": GRASS,
+    }
 ]
 
 
@@ -83,281 +132,382 @@ def load_image(filename, w, h):
 
 
 images = {
-    "mahi": load_image("mahi.png", 60, 60),
-    "hilly": load_image("hilly.png", 60, 60),
-    "august": load_image("august.png", 60, 60),
-    "leo": load_image("leo.png", 60, 60),
-    "raj": load_image("raj.png", 60, 60),
-    "corn": load_image("corn.png", 35, 50),
-    "egg": load_image("egg.png", 30, 30),
-    "nest": load_image("nest.png", 90, 44),
-    "water": load_image("water.png", 80, 52),
-    "fence": load_image("fence.png", 90, 63),
-    "bomb": load_image("bomb.png", 20, 20),
-    "fox": load_image("fox.png", 60, 70),
-    "farmer": load_image("farmer.png", 60, 80),
+    "mahi":   load_image("mahi.png",    60, 60),
+    "hilly":  load_image("hilly.png",   60, 60),
+    "august": load_image("august.png",  60, 60),
+    "leo":    load_image("leo.png",     60, 60),
+    "raj":    load_image("raj.png",     60, 60),
+    "corn":   load_image("corn.png",    35, 50),
+    "egg":    load_image("egg.png",     30, 30),
+    "nest":   load_image("nest.png",    90, 44),
+    "water":  load_image("water.png",   80, 52),
+    "fence":  load_image("fence.png",   90, 63),
+    "bomb":   load_image("bomb.png",    20, 20),
+    "fox":    load_image("fox.png",     60, 70),
+    "farmer": load_image("farmer.png",  60, 80),
 }
 
-font_big = pygame.font.SysFont("Arial", 48, bold=True)  # big font for titles
-font_medium = pygame.font.SysFont("Arial", 22, bold=True)  # medium font for HUD
-font_small = pygame.font.SysFont("Arial", 16)  # small font for labels
+font_big    = pygame.font.SysFont("Arial", 48, bold=True)
+font_medium = pygame.font.SysFont("Arial", 22, bold=True)
+font_small  = pygame.font.SysFont("Arial", 16)
 
 
-# person 2 – drawing functions
-# title screen
+#drawing functions
 def draw_title():
-    screen.fill(SKY)  # paints background blue
-    screen.blit(font_big.render("CHICKEN GAME", True, WHITE), (200, 200))  # draws title
-    screen.blit(font_medium.render("Press ENTER to start", True, WHITE), (250, 320))  # draws hint
-
-
-selected_chick = 0
+    screen.fill(SKY)
+    screen.blit(font_big.render("CHICKEN GAME", True, WHITE), (200, 200))
+    screen.blit(font_medium.render("Press ENTER to start", True, WHITE), (250, 320))
 
 
 def draw_select():
-    screen.fill(SKY)  # blue background
+    screen.fill(SKY)
+    screen.blit(font_big.render("CHOOSE YOUR CHICK", True, WHITE), (125, 60))
 
-    # title
-    screen.blit(font_big.render("CHOOSE YOUR CHICK", True, WHITE), (200, 60))  # title text
-
-    # chick positions on screen
     chicks_position = [80, 210, 340, 470, 600]
 
-    # draw each chick one by one
     for i, chick in enumerate(Players):
-
-        # draw white box around the selected chick
         if i == selected_chick:
-            pygame.draw.rect(screen, WHITE, (chicks_position[i] - 40, 150, 80, 80), 3)  # white border
+            pygame.draw.rect(screen, WHITE, (chicks_position[i] - 40, 150, 80, 80), 3)
+        screen.blit(images[chick["id"]], (chicks_position[i] - 30, 160))
+        screen.blit(font_small.render(chick["name"], True, WHITE), (chicks_position[i] - 30, 260))
 
-        # draw chick image
-        screen.blit(images[chick["id"]], (chicks_position[i] - 30, 160))  # chick picture
-
-        # draw chick name
-        screen.blit(font_small.render(chick["name"], True, WHITE), (chicks_position[i] - 30, 260))  # chick name
-
-    # draw hint at bottom
-    screen.blit(font_small.render("← → to browse, then ENTER to play", True, WHITE), (220, 380))  # hint text
+    screen.blit(font_small.render("← → TO BROWSE | ENTER TO PLAY", True, WHITE), (220, 380))
 
 
 def draw_gameover():
+    screen.fill(GRASS)
+    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    screen.blit(overlay, (0, 0))
+    screen.blit(font_big.render("GAME OVER", True, RED), (250, 200))
+    screen.blit(font_medium.render("Press ENTER to retry  |  ESC for title", True, WHITE), (170, 320))
+
+def draw_won():
+    screen.fill(GRASS)
+    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    screen.blit(overlay, (0, 0))
+    screen.blit(font_big.render("YOU WON", True, SKY), (275, 200))
+    screen.blit(font_medium.render("Press ENTER for next level  |  ESC for title", True, WHITE), (170, 320))
+
+def draw_levelsdone():
+    screen.fill(GRASS)
+    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    screen.blit(overlay, (0, 0))
+    screen.blit(font_big.render("All Levels Done!", True, SKY), (200, 200))
+    screen.blit(font_medium.render("Press ENTER for title", True, WHITE), (275, 320))
 
 
-def draw_bar(surface, fonts, x, y, value, max_value, color, label):
-    BAR_WIDTH  = 150
-    BAR_HEIGHT = 14
+def draw_hud():
+    #background bar
+    pygame.draw.rect(screen, DARK_GRAY, (0, 0, W, 50))
 
-    pygame.draw.rect(screen, (80, 80, 80), (x, y, BAR_WIDTH, BAR_HEIGHT))
-    fill_width = int(BAR_WIDTH * value/max_value)
-    label_surf = fonts["small"].render(label, True, WHITE)
-    surface.blit(label_surf, (x, y -20))
-    if fill_width > 0:
-        pygame.draw.rect(surface, color, (x, y, fill_width, BAR_HEIGHT))
-    pygame.draw.rect(surface, (255, 255, 255), (x, y, BAR_WIDTH, BAR_HEIGHT), 1)
+    #health bar
+    pygame.draw.rect(screen, (80, 80, 80), (10, 8, 160, 16))
+    pygame.draw.rect(screen, GREEN,          (10, 8, int(160 * player["health"] / 100), 16))
+    screen.blit(font_small.render(f"HP  {int(player['health'])}", True, WHITE), (10, 28))
 
-def draw_hud(screen, fonts, health, hunger, energy, time_left, eggs, eggs_needed):
-    pygame.draw.rect(screen, (40,40,40),(0, 0, W, 50))
-    draw_bar(screen, fonts,20, 25, health,100, GRASS,'HEALTH')
-    draw_bar(screen, fonts, 200,25, hunger, 100, ORANGE,'HUNGER')
-    draw_bar(screen, fonts, 380,25,energy,100, YELLOW,'ENERGY')
-#timer
-    col = RED if time_left < 20 else WHITE
-    screen.blit(fonts["small"].render(f"Time: {int(time_left)}s", True, col), (W - 120, 8))
-#eggs
-    screen.blit(fonts["small"].render(f"Eggs:{eggs}/{eggs_needed}", True, WHITE), (W-120, 28))
+    #hunger bar
+    pygame.draw.rect(screen, (80, 80, 80), (210, 8, 160, 16))
+    pygame.draw.rect(screen, ORANGE,       (210, 8, int(160 * player["hunger"] / 100), 16))
+    screen.blit(font_small.render(f"Hunger  {int(player['hunger'])}", True, WHITE), (210, 28))
 
-# person 3 – player movement + stats
+    #energy bar
+    pygame.draw.rect(screen, (80, 80, 80), (410, 8, 160, 16))
+    pygame.draw.rect(screen, YELLOW,       (410, 8, int(160 * player["energy"] / 100), 16))
+    screen.blit(font_small.render(f"Energy  {int(player['energy'])}", True, WHITE), (410, 28))
+
+    #level timer
+    pygame.draw.rect(screen, (80, 80, 80), (610, 8, 160, 16))
+    time_ratio = max(0, level_timer / Levels[level_count]["time_limit"])
+    pygame.draw.rect(screen, SKY, (610, 8, int(160 * time_ratio / 150), 16))
+    screen.blit(font_small.render(f"Time Left  {int(level_timer)}", True, WHITE), (610, 28))
+
+
+def draw_game():
+    screen.fill(Levels[level_count]["bg_color"])
+
+    #draw water
+    for water in waters:
+        screen.blit(images["water"], (int(water["x"]), int(water["y"])))
+
+    #draw fences
+    for fence in fences:
+        screen.blit(images["fence"], (int(fence["x"]), int(fence["y"])))
+
+    #draw nest
+    screen.blit(images["nest"], (700, 60))
+
+    #draw bombs
+    for bomb in bombs:
+        if bomb["alive"]:
+            screen.blit(images["bomb"], (int(bomb["x"]), int(bomb["y"])))
+
+    #draw fox if level has one
+    if Levels[level_count]["has_fox"] and fox is not None:
+        screen.blit(images["fox"], (int(fox["x"]), int(fox["y"])))
+
+    #draw farmer if level has one
+    if Levels[level_count]["has_farmer"] and farmer is not None:
+        screen.blit(images["farmer"], (int(farmer["x"]), int(farmer["y"])))
+
+    #draw chicken
+    img = images[player["chick_id"]]
+    if not player["facing_left"]:
+        img = pygame.transform.flip(img, True, False)
+    screen.blit(img, (int(player["x"]), int(player["y"])))
+
+    #draw egg on chicken if carrying
+    if player["carrying_egg"]:
+        screen.blit(images["egg"], (int(player["x"]) + 40, int(player["y"]) - 10))
+
+    #draws hud on top
+    draw_hud()
+
+    #draw popup
+    if popup_timer > 0 and popup_msg:
+        txt = font_medium.render(popup_msg, True, WHITE)
+        bg  = pygame.Surface((txt.get_width() + 20, 36), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 180))
+        screen.blit(bg,  (W // 2 - bg.get_width()  // 2, H // 2 - 18))
+        screen.blit(txt, (W // 2 - txt.get_width() // 2, H // 2 - 10))
+
+
+#player movement + stats
 def make_player():
-    # creates a new player dictionary with all starting values
-    player = {
-        # position
-        "x": 60.0,  # starting position from left
-        "y": 500.0,  # starting position from top
-        "previous_x": 60.0,  # saves last position before moving
-        "previous_y": 500.0,  # saves last position before moving
-
-        # movement
-        "speed": 180.0,  # how fast the chicken moves in pixels per second
-        "facing_left": True,  # is the chicken facing left?
-        "moving": False,  # is the chicken moving right now?
-
-        # HUD stats
-        "health": 100.0,  # starts at 100, game over when 0
-        "hunger": 100.0,  # starts at 100, drains over time
-        "energy": 100.0,  # starts at 100, drains when moving
-
-        # egg
-        "carrying_egg": False,  # is the chicken holding an egg?
-        "egg_cooldown": 0.0,  # cooldown before chicken can lay again
-        "eggs_delivered": 0,  # how many eggs delivered to nest so far
-
-        # timer
-        "hunger_timer": 0.0,  # counts up to 5 seconds then hunger drops
-        "standing_timer": 0.0,  # counts how long chicken has been standing still
-
-        # selected chick id
-        "chick_id": Players[selected_chick]["id"],  # which chick image to use
+    return {
+        "x": 60.0,
+        "y": 500.0,
+        "previous_x": 60.0,
+        "previous_y": 500.0,
+        "speed": 180.0,
+        "facing_left": True,
+        "moving": False,
+        "health": 100.0,
+        "hunger": 100.0,
+        "energy": 100.0,
+        "carrying_egg": False,
+        "egg_timer": 0.0, #for the start of the game to prevent laying eggs instantly
+        "egg_cooldown": 0.0,
+        "eggs_delivered": 0,
+        "hunger_timer": 0.0,
+        "standing_timer": 0.0,
+        "chick_id": Players[selected_chick]["id"],
     }
 
-    return player
 
 def move_player():
-    #geeksforgeeks.org/python/python-moving-an-object-in-pygame
-    keys = pygame.key.get_pressed()
     global player, dt
-    # check which direction keys are pressed
-    direction_x = 0   # left and right
-    direction_y = 0   # up and down
+    keys = pygame.key.get_pressed()
+    direction_x = 0
+    direction_y = 0
 
-    #for both arrow keys and WASD
     if keys[pygame.K_LEFT]  or keys[pygame.K_a]:
-        direction_x = -1              # moving left
-        player["facing_left"] = True  # face left(for the flip of the image)
-
+        direction_x = -1
+        player["facing_left"] = True
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        direction_x = 1               # moving right
-        player["facing_left"] = False # face right(for the flip of the image)
-
+        direction_x = 1
+        player["facing_left"] = False
     if keys[pygame.K_UP]    or keys[pygame.K_w]:
-        direction_y = -1              # moving up
-
+        direction_y = -1
     if keys[pygame.K_DOWN]  or keys[pygame.K_s]:
-        direction_y = 1               # moving down
+        direction_y = 1
 
-    #check if chicken is moving at all
     player["moving"] = direction_x != 0 or direction_y != 0
 
-    #for diagnal
-    #https://gamedev.stackexchange.com/questions/104437/diagonal-movement-with-pygame-rect-class
-    #right + down = √(10² + 10²) = 14.1 total speed but we are doing right+down  = √(7.07² + 7.07²) = 10 which makes it equal
     if direction_x != 0 and direction_y != 0:
-        direction_x = direction_x * 0.707
-        direction_y = direction_y * 0.707
+        direction_x *= 0.707
+        direction_y *= 0.707
 
-    # slow down when energy is low
     current_speed = player["speed"]
-
     if player["energy"] < 20:
-        current_speed = current_speed * 0.45   # very slow
+        current_speed *= 0.45
     elif player["energy"] < 50:
-        current_speed = current_speed * 0.70   # a bit slow
+        current_speed *= 0.70
 
-    # position BEFORE moving
-    #need it so check_fence() can push chicken back if it hits a fence
     player["previous_x"] = player["x"]
     player["previous_y"] = player["y"]
 
-    #actually moves the chicken
-    #new position = old position + directionxspeedxtime
-    #multiplying by dt makes movement the same speed on every computer
-    #eg 60(normal speed set in game)+ 1(presed 1 right) * 180(chick speed) * dt
-    player["x"] = player["x"] + direction_x * current_speed * dt
-    player["y"] = player["y"] + direction_y * current_speed * dt
+    player["x"] += direction_x * current_speed * dt
+    player["y"] += direction_y * current_speed * dt
 
-    #stops the chicken from walking off screen
-    if player["x"] < 0:
-        player["x"] = 0    #stop at left edge
-    if player["x"] > W - 60:
-        player["x"] = W - 60    #stop at right edge
-    if player["y"] < 60:
-        player["y"] = 60    #stop at top edge (btw 60 is the HUD height)
-    if player["y"] > H - 60:
-        player["y"] = H - 60    #stop at bottom edge
+    player["x"] = max(0, min(W - 60, player["x"]))
+    player["y"] = max(60, min(H - 60, player["y"]))
+
 
 def drain_stats():
     global player, dt
 
-    # egg cooldown counts down to 0
     if player["egg_cooldown"] > 0:
         player["egg_cooldown"] = max(0.0, player["egg_cooldown"] - dt)
 
-    # hunger decreases by 2 every 5 seconds
     player["hunger_timer"] += dt
     if player["hunger_timer"] >= 5.0:
         player["hunger_timer"] -= 5.0
         player["hunger"] = max(0.0, player["hunger"] - 2.0)
 
-    # if starving, lose health
     if player["hunger"] == 0:
         player["health"] = max(0.0, player["health"] - 2.0 * dt)
 
-    # energy drains when moving
     if player["moving"]:
-        player["energy"] = max(0.0, player["energy"] - (1.0 / FPS))
-        player["standing_timer"] = 0.0
+        player["energy"] = max(0.0, player["energy"] - (1.5 / FPS))
+
+    player["egg_timer"] += dt
+    if player["egg_timer"] >= 10.0:
+        player["egg_timer"] = 0.0
+        try_lay_eggs()
 
 
 def try_lay_eggs():
-    pass
+    #Tries to lay an egg but you need hunger to be 50+ and energy to be 70+
+    global player
+    if player["carrying_egg"]:
+        pop_up_message("Already carrying an egg!")
+        return
+    if player["egg_cooldown"] > 0:
+        pop_up_message(f"Cooldown: {int(player['egg_cooldown'])}s")
+        return
+    if player["hunger"] < 50:
+        pop_up_message("Need 50+ hunger to lay!")
+        return
+    if player["energy"] < 70:
+        pop_up_message("Need 70+ energy to lay!")
+        return
+    player["carrying_egg"] = True
+    player["hunger"] = max(0.0, player["hunger"] - 10.0)
+    player["energy"] = max(0.0, player["energy"] - 15.0)
+    player["egg_cooldown"] = float(EGG_COOLDOWN)
+    pop_up_message("Egg laid! Bring it to the nest!")
 
-def carry_to_nest():
-    pass
-
-# person 4 – items + collisions
+#items + collisions
 def spawn_corn():
     pass
 
 def disappear_corn():
     pass
 
-def check_water():  # if the player is touching the water
-    global player
-    # water position
-    chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
-    water_rect = pygame.Rect(water["x"], water["y"], 80, 52)
 
-    if chicken_rect.colliderect(water_rect):
-        # Refill energy up to 100
-        player["energy"] = min(100.0, player["energy"] + 40.0)
-        pop_up_message("Refreshing!!! + 40 energy")
+def make_water():
+    return {
+        "x": random.randint(100, W - 150),
+        "y": random.randint(100, H - 100),
+        "w": 80,
+        "h": 52,
+    }
 
 
-def check_fence():  # if the player is touching the fence
-    global player
+def check_water():
+    global player, dt, waters
+    for water in waters:
+        chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
+        water_rect   = pygame.Rect(water["x"],  water["y"],  water["w"], water["h"])
+        if chicken_rect.colliderect(water_rect):
+            player["energy"] = min(100.0, player["energy"] + 20.0 * dt)
+
+
+def make_fence():
+    return {
+        "x": random.randint(100, W - 200),
+        "y": random.randint(100, H - 150),
+        "w": 90,
+        "h": 63,
+    }
+
+
+def check_fence():
+    global player, fences
     chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
     for fence in fences:
-        fence_rect = pygame.Rect(fence["x"], fence["y"], 90, 63)
+        fence_rect = pygame.Rect(fence["x"], fence["y"], fence["w"], fence["h"])
         if chicken_rect.colliderect(fence_rect):
-            # Revert to original position before moving
             player["x"] = player["previous_x"]
             player["y"] = player["previous_y"]
-            break # only one collision needed to stop the movement
 
 
-def check_nest():  # if the player is touching the nest
+def check_nest():  #if the player is touching the nest
     global player
-    nest_rect = pygame.Rect(600, 500, 90, 44)
+    nest_rect = pygame.Rect(700, 60, 90, 44)
     chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
     if chicken_rect.colliderect(nest_rect):
         if player["carrying_egg"]:
             player["carrying_egg"] = False
             player["eggs_delivered"] += 1
-            pop_up_message("Eggy delivered!!")
+            pop_up_message(f"Egg delivered! {player['eggs_delivered']}/{Levels[level_count]['eggs_needed']}")
+        else:
+            try_lay_eggs()
 
+def make_fox() -> dict:
+    return {
+        "x":            100.0,
+        "y":            100.0,
+        "speed":        90.0,
+        "hit_cooldown": 0.0,
+    }
 
-def move_fox()  # chases the chicken
+def move_fox() -> None:
+    global fox, dt
 
+    difference_x = player["x"] - fox["x"]
+    difference_y = player["y"] - fox["y"]
+    distance     = (difference_x**2 + difference_y**2) ** 0.5
 
-def check_fox():  # if fox touches the chicken = take damage
-    global player
+    if distance > 0:
+        fox["x"] = fox["x"] + (difference_x / distance) * fox["speed"] * dt
+        fox["y"] = fox["y"] + (difference_y / distance) * fox["speed"] * dt
+
+    #count down hit cooldown
+    if fox["hit_cooldown"] > 0:
+        fox["hit_cooldown"] = max(0.0, fox["hit_cooldown"] - dt)
+
+def check_fox():
+    global player, fox
+    if fox is None:
+        return
+    #movement toward player
+    distance_x = player["x"] - fox["x"]
+    distance_y = player["y"] - fox["y"]
+
+    distance = max(1, (distance_x**2 + distance_y**2) ** 0.5)
+
+    speed = 2   #adjust speed here
+
+    fox["x"] += speed * distance_x / distance
+    fox["y"] += speed * distance_y / distance
+
+    #collision
     chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
-    fox_rect = pygame.Rec(fox["x"], fox["y"], 60, 70)
+    fox_rect = pygame.Rect(fox["x"], fox["y"], 60, 70)
 
     if chicken_rect.colliderect(fox_rect):
-        # only deal dmg when hit cooldown expire
-        if fox["hit_cooldown"] <= 0:
-            player["heath"] -= 20
-            if player["health"] < 0:
-                player["health"] = 0
-            fox["hit_cooldown"] = 1.5 # seconds before fox bite again
-            pop_up_message("The fox bit you:(! -20 health!")
+        player["health"] -= 20
 
+def make_farmer() -> dict:
+    return {
+        "x":            600.0,
+        "y":            200.0,
+        "speed":        5.0,
+        "direction":    1,
+        "hit_cooldown": 0.0,
+    }
 
+def move_farmer() -> None:
+    global farmer, dt
+    if farmer is None:
+        return
 
-def move_farmer()  # patrols left and right
+    #move left/right
+    farmer["x"] += farmer["speed"] * farmer["direction"]
 
+    #bounces at edges
+    if farmer["x"] <= 0 or farmer["x"] >= W - 60:
+        farmer["direction"] *= -1
 
-def check_farmer():  # if farmer touches the chicken = take damage or die
+    #count down hit cooldown
+    if farmer["hit_cooldown"] > 0:
+        farmer["hit_cooldown"] = max(0.0, farmer["hit_cooldown"] - dt)
+
+def check_farmer():  #if farmer touches the chicken = damage
     global player, farmer
     chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
     farmer_rect = pygame.Rect(farmer["x"], farmer["y"], 60, 80)
@@ -370,39 +520,175 @@ def check_farmer():  # if farmer touches the chicken = take damage or die
             farmer["hit_cooldown"] = 1.5 # seconds before farmer can hit again
             pop_up_message("The big bad farmer caught you! -35 health!")
 
+
 def make_bomb():
-    # creates a bomb at a random position on the map
-    #randir is a powerful tool for generating random integers between two specified values
-    bomb = {
-        "x":     random.randint(100, W - 100),  # random position from left
-        "y":     random.randint(100, H - 100),  # random position from top
-        "alive": True,  # True = still on map, False = exploded
+    return {
+        "x":     random.randint(100, W - 100),
+        "y":     random.randint(100, H - 100),
+        "alive": True,
+        "damage": 30
     }
-    return bomb
 
 def check_bomb():
     global player, bombs
-
-    # loops through every bomb on the map
     for bomb in bombs:
-        # only check bombs that are still alive
-        if bomb["alive"] == True:
-            # create a rectangle around the chicken
-            chicken_rectangle = pygame.Rect(player["x"], player["y"], 60, 60)
-            # create a rectangle around the bomb
-            bomb_rectangle = pygame.Rect(bomb["x"], bomb["y"], 20, 20)
-            # check if chicken rectangle and bomb rectangle are touching
-            if chicken_rectangle.colliderect(bomb_rectangle):
-                # bomb explodes and remove it from map
+        if bomb["alive"]:
+            chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
+            bomb_rect    = pygame.Rect(bomb["x"],   bomb["y"],   20, 20)
+            if chicken_rect.colliderect(bomb_rect):
                 bomb["alive"] = False
-                # chicken loses 30 health
-                player["health"] = player["health"] - 30
-                # make sure health never goes below 0
-                if player["health"] < 0:
-                    player["health"] = 0
-                # show popup message
-                pop_up_message("BOOM! -30 health!")
+                player["health"] = max(0, player["health"] - bomb["damage"])
+                pop_up_message(f"BOOM! -{bomb['damage']} health!")
 
-# person 5 – main game loop + screens
+
+#main game loop + screens
+def pop_up_message(message):
+    global popup_msg, popup_timer
+    popup_msg   = message
+    popup_timer = 2.0
+
+def level_setup():
+    #Sets up everything needed for each level
+    global player, bombs, waters, fences, fox, farmer, level_timer
+    player = make_player()
+    bombs = [make_bomb() for _ in range(Levels[level_count]["bomb_count"])] #for _ in range - not interested in how many times it will loop
+    waters = [make_water() for _ in range(Levels[level_count]["water_count"])]
+    fences = [make_fence() for _ in range(Levels[level_count]["fence_count"])]
+    level_timer = float(Levels[level_count]["time_limit"])
+    fox = make_fox() if Levels[level_count]["has_fox"] else None
+    farmer = make_farmer() if Levels[level_count]["has_farmer"] else None
+
 
 def start_game():
+    global state, player, dt, selected_chick, popup_timer, popup_msg, Levels, level_timer
+    global bombs, waters, fences, fox, farmer
+    level_count: int = 0
+
+    while True:
+        dt = clock.tick(FPS) / 1000.0
+
+        #handle events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+
+                #title screen, press enter to go to character select
+                if state == "title":
+                    if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                        state = "select"
+
+                #character select, browse and confirm
+                elif state == "select":
+                    if event.key == pygame.K_LEFT:
+                        selected_chick = (selected_chick - 1) % len(Players)
+                    if event.key == pygame.K_RIGHT:
+                        selected_chick = (selected_chick + 1) % len(Players)
+                    if event.key == pygame.K_RETURN:
+                        # set up the game
+                        level_timer = Levels[level_count]["time_limit"]
+                        player = make_player()
+                        bombs = [make_bomb() for i in range(Levels[level_count]["bomb_count"])]
+                        waters = [make_water() for i in range(Levels[level_count]["water_count"])]
+                        fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
+                        if Levels[level_count]["has_fox"]:
+                            fox = make_fox()
+                        if Levels[level_count]["has_farmer"]:
+                            farmer = make_farmer()
+                        state  = "play"
+
+                #game over, retry or go back to title
+                elif state == "won":
+                    if event.key == pygame.K_RETURN:
+                        level_timer = Levels[level_count]["time_limit"]
+                        player = make_player()
+                        bombs = [make_bomb() for i in range(Levels[level_count]["bomb_count"])]
+                        waters = [make_water() for i in range(Levels[level_count]["water_count"])]
+                        fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
+                        if Levels[level_count]["has_fox"]:
+                            make_fox()
+                        if Levels[level_count]["has_farmer"]:
+                            make_farmer()
+                        state = "play"
+                    if event.key == pygame.K_ESCAPE:
+                        state = "title"
+                elif state == "over":
+                    if event.key == pygame.K_RETURN:
+                        level_timer = Levels[level_count]["time_limit"]
+                        player = make_player()
+                        bombs  = [make_bomb() for i in range(Levels[level_count]["bomb_count"])]
+                        waters = [make_water() for i in range(Levels[level_count]["water_count"])]
+                        fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
+                        state  = "play"
+                        if Levels[level_count]["has_fox"]:
+                            make_fox()
+                        if Levels[level_count]["has_farmer"]:
+                            make_farmer()
+                    if event.key == pygame.K_ESCAPE:
+                        state = "title"
+                elif state == "levels_done":
+                    if event.key == pygame.K_RETURN:
+                        state = "title"
+
+        #update
+        if state == "play":
+            check_nest()
+            move_player()
+            drain_stats()
+            check_fence()
+            check_water()
+            check_bomb()
+
+            #only if farmer is in the level
+            if farmer is not None:
+                move_farmer()
+                check_farmer()
+
+            #only if fox is in the level
+            if fox is not None:
+                check_fox()
+
+            #count down popup
+            if popup_timer > 0:
+                popup_timer -= dt
+
+            #level count down
+            if level_timer >0:
+                level_timer -= dt
+
+            #check game won
+            if player["eggs_delivered"] == Levels[level_count]["eggs_needed"]:
+                state = "won"
+                level_count += 1
+                if level_count >= len(Levels)-1:
+                    state = "levels_done"
+                    level_count = 0
+
+
+            #check game over
+            elif player["health"] <= 0 or level_timer <= 0:
+                state = "over"
+
+
+        #draw
+        if state == "title":
+            draw_title()
+        elif state == "select":
+            draw_select()
+        elif state == "play":
+            draw_game()
+        elif state == "won":
+            draw_won()
+        elif state == "over":
+            draw_gameover()
+        elif state == "levels_done":
+            draw_levelsdone()
+
+        #update display
+        pygame.display.flip()
+
+
+if __name__ == "__main__":
+    start_game()
