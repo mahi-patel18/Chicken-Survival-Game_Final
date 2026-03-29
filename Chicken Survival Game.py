@@ -4,7 +4,7 @@ import random
 
 pygame.init()
 
-#Screen size
+#possible Screen size?
 W = 800  #game width in pixels
 H = 600  #game height in pixels
 FPS = 60  #frames per second
@@ -13,12 +13,14 @@ screen = pygame.display.set_mode((W, H))  #opens the game window
 pygame.display.set_caption("Chicken Survival Game")  #sets the title bar text
 clock = pygame.time.Clock()  #controls the FPS
 
+#this will be the basic stats needed
 PLAYER_SPEED  = 180
 PLAYER_HEALTH = 100
 PLAYER_HUNGER = 100
 PLAYER_ENERGY = 100
 EGG_COOLDOWN  = 7
 
+#items that we need more than one
 bombs  = []
 waters = []
 fences = []
@@ -35,6 +37,7 @@ level_count    = 0
 fox            = None
 farmer         = None
 
+#all colors we will possibly use
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (220, 50, 50)  #Health bar
@@ -49,7 +52,7 @@ GRAY = (150, 150, 150)
 DARK_GRAY = (50, 50, 50)  #HUD background
 PINK = (225, 127, 162)
 
-#Data for Chicken
+#to easily access the data for all the chickens
 Players = [
     {"id": "mahi",   "name": "Mahi Chick",   "image": "mahi.png"},
     {"id": "hilly",  "name": "Hilly Chick",  "image": "hilly.png"},
@@ -58,13 +61,14 @@ Players = [
     {"id": "raj",    "name": "Raj Chick",    "image": "raj.png"},
 ]
 
+#for now - 5 levels, we can change the timer and other counts too
 Levels = [
     {
         "level": 1,
         "eggs_needed": 1,
         "time_limit": 120,
-        "has_fox": True,
-        "has_farmer": True,
+        "has_fox": False,
+        "has_farmer": False,
         "bomb_count": 3,
         "fence_count": 3,
         "water_count": 2,
@@ -121,11 +125,10 @@ Levels = [
     }
 ]
 
-# load images
+#loads all the images that we will be using in the game
 def load_image(filename, w, h):
     image = pygame.image.load("Images/" + filename).convert_alpha()
     return pygame.transform.scale(image, (w, h))
-
 
 images = {
     "mahi":   load_image("mahi.png",    60, 60),
@@ -143,15 +146,15 @@ images = {
     "farmer": load_image("farmer.png",  60, 80),
 }
 
+#font sizes
 font_big    = pygame.font.SysFont("Arial", 48, bold=True)
 font_medium = pygame.font.SysFont("Arial", 22, bold=True)
 font_small  = pygame.font.SysFont("Arial", 16)
 
 def draw_title():
     screen.fill(SKY)
-    screen.blit(font_big.render("CHICKEN GAME", True, WHITE), (200, 200))
+    screen.blit(font_big.render("CHICKEN Survival GAME", True, WHITE), (200, 200))
     screen.blit(font_medium.render("Press ENTER to start", True, WHITE), (250, 320))
-
 
 def draw_select():
     screen.fill(SKY)
@@ -160,21 +163,22 @@ def draw_select():
     chicks_position = [80, 210, 340, 470, 600]
 
     for i, chick in enumerate(Players):
+        #goes through every players
         if i == selected_chick:
             pygame.draw.rect(screen, WHITE, (chicks_position[i] - 40, 150, 80, 80), 3)
         screen.blit(images[chick["id"]], (chicks_position[i] - 30, 160))
         screen.blit(font_small.render(chick["name"], True, WHITE), (chicks_position[i] - 30, 260))
 
-    screen.blit(font_small.render("use ← → TO BROWSE | Enter To Play", True, WHITE), (220, 380))
-
+    screen.blit(font_small.render("use ← → to browse then Enter To Play", True, WHITE), (220, 380))
 
 def draw_gameover():
     screen.fill(GRASS)
     overlay = pygame.Surface((W, H), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 160))
     screen.blit(overlay, (0, 0))
+    #for transparency
     screen.blit(font_big.render("GAME OVER", True, RED), (250, 200))
-    screen.blit(font_medium.render("Press ENTER to retry  |  ESC for title", True, WHITE), (170, 320))
+    screen.blit(font_medium.render("Press ENTER to retry or ESC for title", True, WHITE), (170, 320))
 
 def draw_won():
     screen.fill(GRASS)
@@ -182,15 +186,15 @@ def draw_won():
     overlay.fill((0, 0, 0, 160))
     screen.blit(overlay, (0, 0))
     screen.blit(font_big.render("YOU WON", True, SKY), (275, 200))
-    screen.blit(font_medium.render("Press ENTER for next level  |  ESC for title", True, WHITE), (170, 320))
+    screen.blit(font_medium.render("Press ENTER for next level or ESC for title", True, WHITE), (170, 320))
 
 def draw_levelsdone():
     screen.fill(GRASS)
     overlay = pygame.Surface((W, H), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 160))
     screen.blit(overlay, (0, 0))
-    screen.blit(font_big.render("All Levels Done!", True, SKY), (200, 200))
-    screen.blit(font_medium.render("Press ENTER for title", True, WHITE), (275, 320))
+    screen.blit(font_big.render("Congrats! You WONNN:)", True, SKY), (200, 200))
+    screen.blit(font_medium.render("Press ENTER to go back to title", True, WHITE), (275, 320))
 
 def draw_hud():
     #background bar
@@ -266,6 +270,7 @@ def draw_game():
         screen.blit(txt, (W // 2 - txt.get_width() // 2, H // 2 - 10))
 
 def make_player():
+    #what every player will have at the start
     return {
         "x": 60.0,
         "y": 500.0,
@@ -278,52 +283,72 @@ def make_player():
         "hunger": 100.0,
         "energy": 100.0,
         "carrying_egg": False,
-        "egg_timer": 0.0, #for the start of the game to prevent laying eggs instantly
+        "egg_timer": 0.0, #for the start of the game to prevent laying eggs instantly, there will be a 10 sec countdown
         "egg_cooldown": 0.0,
         "eggs_delivered": 0,
         "hunger_timer": 0.0,
-        "standing_timer": 0.0,
+        "standing_timer": 0.0, #for the energy to stop going down
         "chick_id": Players[selected_chick]["id"],
     }
 
 
 def move_player():
+    #geeksforgeeks.org/python/python-moving-an-object-in-pygame
     global player, dt
     keys = pygame.key.get_pressed()
+    #to check which direction keys are pressed
     direction_x = 0
     direction_y = 0
 
+    #for both arrow keys and WASD
     if keys[pygame.K_LEFT]  or keys[pygame.K_a]:
-        direction_x = -1
-        player["facing_left"] = True
+        direction_x = -1 #for left
+        player["facing_left"] = True #for the flipping of the image
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        direction_x = 1
+        direction_x = 1 #for right
         player["facing_left"] = False
     if keys[pygame.K_UP]    or keys[pygame.K_w]:
-        direction_y = -1
+        direction_y = -1 #for up
     if keys[pygame.K_DOWN]  or keys[pygame.K_s]:
-        direction_y = 1
+        direction_y = 1 #for down
 
+    #check if chicken is moving at all or not
     player["moving"] = direction_x != 0 or direction_y != 0
 
+    # for diagnal
+    # https://gamedev.stackexchange.com/questions/104437/diagonal-movement-with-pygame-rect-class
+    # right + down = √(10² + 10²) = 14.1 total speed but we are doing right+down  = √(7.07² + 7.07²) = 10 which makes it equal
     if direction_x != 0 and direction_y != 0:
         direction_x *= 0.707
         direction_y *= 0.707
 
+    #slows down the chick when energy is low at like a specific energy levek
     current_speed = player["speed"]
     if player["energy"] < 20:
         current_speed *= 0.45
     elif player["energy"] < 50:
         current_speed *= 0.70
 
+    #need it so check_fence() can push chicken back if it hits a fence
     player["previous_x"] = player["x"]
     player["previous_y"] = player["y"]
 
+    #actually moves the chicken
+    #new position = old position + directionxspeedxtime
+    #multiplying by dt makes movement the same speed on every computer
+    #eg 60(normal speed set in game)+ 1(presed 1 right) * 180(chick speed) * dt
     player["x"] += direction_x * current_speed * dt
     player["y"] += direction_y * current_speed * dt
 
-    player["x"] = max(0, min(W - 60, player["x"]))
-    player["y"] = max(60, min(H - 60, player["y"]))
+    # stops the chicken from walking off screen
+    if player["x"] < 0:
+        player["x"] = 0  # stop at left edge
+    if player["x"] > W - 60:
+        player["x"] = W - 60  # stop at right edge
+    if player["y"] < 60:
+        player["y"] = 60  # stop at top edge (btw 60 is the HUD height)
+    if player["y"] > H - 60:
+        player["y"] = H - 60  # stop at bottom edge
 
 
 def drain_stats():
