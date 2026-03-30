@@ -442,7 +442,7 @@ def make_water():
 
 def make_fence():
     return {
-        "x": random.randint(100, W - 200),
+        "x": random.randint(100, W - 200),  # to make sure it doesnt spawn beyond the game border
         "y": random.randint(100, H - 150),
         "w": 90,
         "h": 63,
@@ -452,7 +452,7 @@ def make_fox() -> dict:
     return {
         "x":            100.0,
         "y":            100.0,
-        "speed":        90.0,
+        "speed":        90.0, #a bit slower than the chicken
         "hit_cooldown": 0.0,
     }
 
@@ -460,26 +460,30 @@ def make_farmer() -> dict:
     return {
         "x":            600.0,
         "y":            200.0,
-        "speed":        5.0,
-        "direction":    1,
+        "speed":        5.0, #speed is calculated through FPS
+        "direction":    1, #to make the farmer move left to right
         "hit_cooldown": 0.0,
     }
 
 def make_bomb():
     return {
-        "x":     random.randint(100, W - 100),
+        "x":     random.randint(100, W - 100), #bomb also spawns randomly
         "y":     random.randint(100, H - 100),
-        "alive": True,
-        "damage": 30
+        "alive": True, #too check if the bomb is active or has it been blasted
+        "damage": 30 # once the player hits the bomb it will decrease the health by 30
     }
 
+#for most of all check functions
+#an invisible rect has been for each item and also for the chick
+#this is to check whether the rect is touching the item
+#this will help us decide how the item will affect the stats(drain or gain)
 def check_water():
     global player, dt, waters
     for water in waters:
         chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
         water_rect   = pygame.Rect(water["x"],  water["y"],  water["w"], water["h"])
         if chicken_rect.colliderect(water_rect):
-            player["energy"] = min(100.0, player["energy"] + 20.0 * dt)
+            player["energy"] = min(100.0, player["energy"] + 20.0 * dt)#gain 20+ energy
 
 def check_fence():
     global player, fences
@@ -487,7 +491,7 @@ def check_fence():
     for fence in fences:
         fence_rect = pygame.Rect(fence["x"], fence["y"], fence["w"], fence["h"])
         if chicken_rect.colliderect(fence_rect):
-            player["x"] = player["previous_x"]
+            player["x"] = player["previous_x"] #prevents the chick to touch the fence and pushes it back to prev position
             player["y"] = player["previous_y"]
 
 def check_nest():
@@ -501,7 +505,7 @@ def check_nest():
             pop_up_message(f"Egg has been delivered! {player['eggs_delivered']}/{Levels[level_count]['eggs_needed']}")
         else:
             try_lay_eggs()
-            
+
 def check_farmer():
     global player, farmer
     chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
