@@ -180,11 +180,14 @@ font_small  = pygame.font.SysFont("Arial", 16)
 
 #for screen.blit - https://www.geeksforgeeks.org/python/pygame-surface-blit-function/
 #https://gjenkinsedu.com/post/pygame_surface_blit_0005/
+#displays title
 def draw_title():
     screen.fill(Sky)
     screen.blit(font_big.render("Chicken Survival Game", True, White), (140, 200))
     screen.blit(font_medium.render("Press ENTER to start", True, White), (270, 320))
 
+#This function pulls Player info that stores in dictionary and displays them at the specific position on the screen
+#draws hint instruction on the screen
 def draw_select():
     screen.fill(Sky)
     screen.blit(font_big.render("CHOOSE YOUR CHICK", True, White), (125, 60))
@@ -200,34 +203,49 @@ def draw_select():
 
     screen.blit(font_small.render("use ← → to browse then Enter To Play", True, White), (220, 380))
 
-def draw_gameover():
-    screen.fill(Grass)
-    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 160))
-    screen.blit(overlay, (0, 0))
-    #for transparency
-    screen.blit(font_big.render("GAME OVER", True, Red), (250, 200))
-    screen.blit(font_medium.render("Press ENTER to retry or ESC for title", True, White), (170, 320))
+#It displays another state of the game after selecting the chicks.
+#It fills the background and draws environmental objects such as water, fences, and bombs on the screen.
+def draw_game():
+    screen.fill(Levels[level_count]["bg_color"])
 
-def draw_won():
-    screen.fill(Grass)
-    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 160))
-    screen.blit(overlay, (0, 0))
-    screen.blit(font_big.render("YOU WON", True, Sky), (275, 200))
-    screen.blit(font_medium.render("Press ENTER for next level or ESC for title", True, White), (170, 320))
+    #draw water
+    for water in waters:
+        screen.blit(images["water"], (int(water["x"]), int(water["y"])))
 
-def draw_levelsdone():
-    screen.fill(Grass)
-    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 160))
-    screen.blit(overlay, (0, 0))
-    screen.blit(font_big.render("Congrats! You WONNN:)", True, Sky), (200, 200))
-    screen.blit(font_medium.render("Press ENTER to go back to title", True, White), (275, 320))
+    #draw fences
+    for fence in fences:
+        screen.blit(images["fence"], (int(fence["x"]), int(fence["y"])))
 
+    #draw nest
+    screen.blit(images["nest"], (700, 60))
+
+    #draw bombs
+    for bomb in bombs:
+        if bomb["alive"]:
+            screen.blit(images["bomb"], (int(bomb["x"]), int(bomb["y"])))
+
+    #draw fox if level has one
+    if Levels[level_count]["has_fox"] and fox is not None:
+        screen.blit(images["fox"], (int(fox["x"]), int(fox["y"])))
+
+    #draw farmer if level has one
+    if Levels[level_count]["has_farmer"] and farmer is not None:
+        screen.blit(images["farmer"], (int(farmer["x"]), int(farmer["y"])))
+
+    #draw chicken
+    img = images[player["chick_id"]]
+    if not player["facing_left"]:
+        img = pygame.transform.flip(img, True, False)
+    screen.blit(img, (int(player["x"]), int(player["y"])))
+
+    #draw egg on chicken if carrying
+    if player["carrying_egg"]:
+        screen.blit(images["egg"], (int(player["x"]) + 40, int(player["y"]) - 10))
+
+#reference - https://www.youtube.com/watch?v=E82_hdoe06M, https://www.youtube.com/watch?v=pUEZbUAMZYA
+#displays HUD, the area where it shows health, hunger, energy bar stats.
+#This function will be called in main game loop to display them in every frames
 def draw_hud():
-    #reference - https://www.youtube.com/watch?v=E82_hdoe06M
-    #background bar
     pygame.draw.rect(screen, Dark_Gray, (0, 0, W, 50))
 
     #health bar
@@ -252,47 +270,34 @@ def draw_hud():
     screen.blit(font_small.render(f"Time Left  {int(level_timer)}", True, White), (610, 28))
 
 
-def draw_game():
-    screen.fill(Levels[level_count]["bg_color"])
+#draw "GAME OVER" when health = 0. It also displays text ENTER to retry or ESC to go back to the title.
+def draw_gameover():
+    screen.fill(Grass)
+    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    screen.blit(overlay, (0, 0))
+    #for transparency
+    screen.blit(font_big.render("GAME OVER", True, Red), (250, 200))
+    screen.blit(font_medium.render("Press ENTER to retry or ESC for title", True, White), (170, 320))
 
-    #draw water
-    for water in waters:
-        screen.blit(images["water"], (int(water["x"]), int(water["y"])))
+#displays "WON" when players complete the level. It also displays ENTER to retry or ESC to go back to the title.
+def draw_won():
+    screen.fill(Grass)
+    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    screen.blit(overlay, (0, 0))
+    screen.blit(font_big.render("YOU WON", True, Sky), (275, 200))
+    screen.blit(font_medium.render("Press ENTER for next level or ESC for title", True, White), (170, 320))
 
-    #draw fences
-    for fence in fences:
-        screen.blit(images["fence"], (int(fence["x"]), int(fence["y"])))
+#displays "WON" when players complete all the level and ENTER to go back to the title.
+def draw_levelsdone():
+    screen.fill(Grass)
+    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    screen.blit(overlay, (0, 0))
+    screen.blit(font_big.render("Congrats! You WONNN:)", True, Sky), (200, 200))
+    screen.blit(font_medium.render("Press ENTER to go back to title", True, White), (275, 320))
 
-    #draw nest
-    screen.blit(images["nest"], (700, 60))
-
-    #draw bombs
-    for bomb in bombs:
-        if bomb["alive"]:
-            screen.blit(images["bomb"], (int(bomb["x"]), int(bomb["y"])))
-
-    #draw corn
-    for corn in corns:
-        if corn["alive"]:
-            screen.blit(images["corn"], (int(corn["x"]), int(corn["y"])))
-
-    #draw fox if level has one
-    if Levels[level_count]["has_fox"] and fox is not None:
-        screen.blit(images["fox"], (int(fox["x"]), int(fox["y"])))
-
-    #draw farmer if level has one
-    if Levels[level_count]["has_farmer"] and farmer is not None:
-        screen.blit(images["farmer"], (int(farmer["x"]), int(farmer["y"])))
-
-    #draw chicken
-    img = images[player["chick_id"]]
-    if not player["facing_left"]:
-        img = pygame.transform.flip(img, True, False)
-    screen.blit(img, (int(player["x"]), int(player["y"])))
-
-    #draw egg on chicken if carrying
-    if player["carrying_egg"]:
-        screen.blit(images["egg"], (int(player["x"]) + 40, int(player["y"]) - 10))
 
     #draws hud
     draw_hud()
