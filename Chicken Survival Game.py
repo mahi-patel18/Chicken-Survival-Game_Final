@@ -376,7 +376,7 @@ def move_player():
     if player["y"] > H - 60:
         player["y"] = H - 60  # stop at bottom edge
 
-
+#handles every stats
 def drain_stats():
     global player, dt
 
@@ -384,37 +384,42 @@ def drain_stats():
         player["egg_cooldown"] = max(0.0, player["egg_cooldown"] - dt)
 
     player["hunger_timer"] += dt
-    if player["hunger_timer"] >= 5.0:
+    if player["hunger_timer"] >= 5.0: #decrease every 5 sec
         player["hunger_timer"] -= 5.0
         player["hunger"] = max(0.0, player["hunger"] - 2.0)
 
-    if player["hunger"] == 0:
+    if player["hunger"] == 0: #drops health when the player is hungry
         player["health"] = max(0.0, player["health"] - 2.0 * dt)
 
-    if player["moving"]:
+    if player["moving"]:#when the player is moving it should decrease the energy, just like how realistically when we walk we get tired
         player["energy"] = max(0.0, player["energy"] - (1.5 / FPS))
 
     player["egg_timer"] += dt
-    if player["egg_timer"] >= 10.0:
+    if player["egg_timer"] >= 10.0: #countdown of about 10 sec to see if the they can lay egg or not then
         player["egg_timer"] = 0.0
         try_lay_eggs()
 
-
 def try_lay_eggs():
     global player
+    #chicken cannot lay an egg if it holding one, so this will check if the chickenhas an egg or not
     if player["carrying_egg"]:
         pop_up_message("Already carrying an egg!")
         return
+    #too avoid making the game be more easy, we need a cooldown so the eggs arent laid in one go
     if player["egg_cooldown"] > 0:
         pop_up_message(f"Cooldown: {int(player['egg_cooldown'])}s")
         return
+    #1st condition, chicken must have 50+ to lay an egg
     if player["hunger"] < 50:
         pop_up_message("Need 50+ hunger to lay!")
         return
-    if player["energy"] < 70:
+    #2nd condition, chicken must have 70+ to lay an egg
+    if (player["energy"] < 70):
         pop_up_message("Need 70+ energy to lay!")
         return
+    #so once they have an egg, carrying egg becomes true
     player["carrying_egg"] = True
+    #once laid, the stats must be drained in order to make it more difficult
     player["hunger"] = max(0.0, player["hunger"] - 10.0)
     player["energy"] = max(0.0, player["energy"] - 15.0)
     player["egg_cooldown"] = float(egg_cooldown)
@@ -429,10 +434,43 @@ def disappear_corn():
 
 def make_water():
     return {
-        "x": random.randint(100, W - 150),
+        "x": random.randint(100, W - 150), # to make sure it doesnt spawn beyond the game border
         "y": random.randint(100, H - 100),
         "w": 80,
         "h": 52,
+    }
+
+def make_fence():
+    return {
+        "x": random.randint(100, W - 200),
+        "y": random.randint(100, H - 150),
+        "w": 90,
+        "h": 63,
+    }
+
+def make_fox() -> dict:
+    return {
+        "x":            100.0,
+        "y":            100.0,
+        "speed":        90.0,
+        "hit_cooldown": 0.0,
+    }
+
+def make_farmer() -> dict:
+    return {
+        "x":            600.0,
+        "y":            200.0,
+        "speed":        5.0,
+        "direction":    1,
+        "hit_cooldown": 0.0,
+    }
+
+def make_bomb():
+    return {
+        "x":     random.randint(100, W - 100),
+        "y":     random.randint(100, H - 100),
+        "alive": True,
+        "damage": 30
     }
 
 def check_water():
@@ -443,14 +481,6 @@ def check_water():
         if chicken_rect.colliderect(water_rect):
             player["energy"] = min(100.0, player["energy"] + 20.0 * dt)
 
-def make_fence():
-    return {
-        "x": random.randint(100, W - 200),
-        "y": random.randint(100, H - 150),
-        "w": 90,
-        "h": 63,
-    }
-
 def check_fence():
     global player, fences
     chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
@@ -459,7 +489,6 @@ def check_fence():
         if chicken_rect.colliderect(fence_rect):
             player["x"] = player["previous_x"]
             player["y"] = player["previous_y"]
-
 
 def check_nest():
     global player
@@ -472,14 +501,19 @@ def check_nest():
             pop_up_message(f"Egg has been delivered! {player['eggs_delivered']}/{Levels[level_count]['eggs_needed']}")
         else:
             try_lay_eggs()
+            
+def check_farmer():
+    global player, farmer
+    chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
+    farmer_rect = pygame.Rect(farmer["x"], farmer["y"], 60, 80)
 
-def make_fox() -> dict:
-    return {
-        "x":            100.0,
-        "y":            100.0,
-        "speed":        90.0,
-        "hit_cooldown": 0.0,
-    }
+    if chicken_rect.colliderect(farmer_rect):
+        if farmer["hit_cooldown"] <= 0:
+            player["health"] -= 35
+            if player["health"] < 0:
+                player["health"] = 0
+            farmer["hit_cooldown"] = 1.5 # seconds before farmer can hit again
+            pop_up_message("The farmer has caught you! -35 health!")
 
 def make_fox_follow():
     global player, fox
@@ -498,14 +532,6 @@ def make_fox_follow():
         player["health"] -= 20 * dt
         pop_up_message("The fox has caught you! your health is decreasing!")
 
-def make_farmer() -> dict:
-    return {
-        "x":            600.0,
-        "y":            200.0,
-        "speed":        5.0,
-        "direction":    1,
-        "hit_cooldown": 0.0,
-    }
 
 def move_farmer() -> None:
     global farmer, dt
@@ -516,28 +542,6 @@ def move_farmer() -> None:
         farmer["direction"] *= -1
     if farmer["hit_cooldown"] > 0:
         farmer["hit_cooldown"] = max(0.0, farmer["hit_cooldown"] - dt)
-
-def check_farmer():
-    global player, farmer
-    chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
-    farmer_rect = pygame.Rect(farmer["x"], farmer["y"], 60, 80)
-
-    if chicken_rect.colliderect(farmer_rect):
-        if farmer["hit_cooldown"] <= 0:
-            player["health"] -= 35
-            if player["health"] < 0:
-                player["health"] = 0
-            farmer["hit_cooldown"] = 1.5 # seconds before farmer can hit again
-            pop_up_message("The farmer has caught you! -35 health!")
-
-
-def make_bomb():
-    return {
-        "x":     random.randint(100, W - 100),
-        "y":     random.randint(100, H - 100),
-        "alive": True,
-        "damage": 30
-    }
 
 def take_bomb_damage():
     global player, bombs
@@ -550,6 +554,7 @@ def take_bomb_damage():
                 player["health"] = max(0, player["health"] - bomb["damage"])
                 pop_up_message(f"BOOM! -{bomb['damage']} health!")
 
+#main game loop
 def pop_up_message(message):
     global popup_msg, popup_timer
     popup_msg   = message
