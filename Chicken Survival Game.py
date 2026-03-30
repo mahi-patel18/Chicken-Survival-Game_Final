@@ -506,8 +506,8 @@ def make_fox_follow():
     chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
     fox_rect = pygame.Rect(fox["x"], fox["y"], 60, 70)
     if chicken_rect.colliderect(fox_rect):
-        player["health"] -= 20
-        pop_up_message("The fox has caught you! -20 health!")
+        player["health"] -= 20 * dt
+        pop_up_message("The fox has caught you! your health is decreasing!")
 
 def make_farmer() -> dict:
     return {
@@ -578,9 +578,9 @@ def level_setup():
 
 
 def start_game():
-    global state, player, dt, selected_chick, popup_timer, popup_msg, Levels, level_timer
+    global state, player, dt, selected_chick, popup_timer, popup_msg, Levels, level_timer, level_count
     global bombs, waters, fences, fox, farmer
-    level_count: int = 0
+    level_count = 0
 
     while True:
         dt = clock.tick(FPS) / 1000.0
@@ -609,36 +609,22 @@ def start_game():
                         fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
                         if Levels[level_count]["has_fox"]:
                             fox = make_fox()
+                        else: fox = None
                         if Levels[level_count]["has_farmer"]:
                             farmer = make_farmer()
+                        else: farmer = None
                         state  = "play"
 
                 elif state == "won":
                     if event.key == pygame.K_RETURN:
-                        level_timer = Levels[level_count]["time_limit"]
-                        player = make_player()
-                        bombs = [make_bomb() for i in range(Levels[level_count]["bomb_count"])]
-                        waters = [make_water() for i in range(Levels[level_count]["water_count"])]
-                        fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
-                        if Levels[level_count]["has_fox"]:
-                            make_fox()
-                        if Levels[level_count]["has_farmer"]:
-                            make_farmer()
+                        level_setup()
                         state = "play"
                     if event.key == pygame.K_ESCAPE:
                         state = "title"
                 elif state == "over":
                     if event.key == pygame.K_RETURN:
-                        level_timer = Levels[level_count]["time_limit"]
-                        player = make_player()
-                        bombs  = [make_bomb() for i in range(Levels[level_count]["bomb_count"])]
-                        waters = [make_water() for i in range(Levels[level_count]["water_count"])]
-                        fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
+                        level_setup()
                         state  = "play"
-                        if Levels[level_count]["has_fox"]:
-                            make_fox()
-                        if Levels[level_count]["has_farmer"]:
-                            make_farmer()
                     if event.key == pygame.K_ESCAPE:
                         state = "title"
                 elif state == "levels_done":
