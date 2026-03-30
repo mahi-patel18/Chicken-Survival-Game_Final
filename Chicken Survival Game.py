@@ -481,17 +481,6 @@ def make_fox() -> dict:
         "hit_cooldown": 0.0,
     }
 
-def move_fox() -> None:
-    global fox, dt
-    difference_x = player["x"] - fox["x"]
-    difference_y = player["y"] - fox["y"]
-    distance     = (difference_x**2 + difference_y**2) ** 0.5
-    if distance > 0:
-        fox["x"] = fox["x"] + (difference_x / distance) * fox["speed"] * dt
-        fox["y"] = fox["y"] + (difference_y / distance) * fox["speed"] * dt
-    if fox["hit_cooldown"] > 0:
-        fox["hit_cooldown"] = max(0.0, fox["hit_cooldown"] - dt)
-
 def make_fox_follow():
     global player, fox
     if fox is None:
