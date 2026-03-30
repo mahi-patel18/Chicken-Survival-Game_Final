@@ -1,3 +1,4 @@
+
 import pygame
 import sys
 import random
@@ -176,14 +177,11 @@ font_small  = pygame.font.SysFont("Arial", 16)
 
 #for screen.blit - https://www.geeksforgeeks.org/python/pygame-surface-blit-function/
 #https://gjenkinsedu.com/post/pygame_surface_blit_0005/
-#draws title
 def draw_title():
     screen.fill(Sky)
     screen.blit(font_big.render("Chicken Survival Game", True, White), (140, 200))
     screen.blit(font_medium.render("Press ENTER to start", True, White), (270, 320))
 
-#This function pulls Player info that stores in dictionary and displays them at the specific position on the screen
-#draws hint instruction on the screen
 def draw_select():
     screen.fill(Sky)
     screen.blit(font_big.render("CHOOSE YOUR CHICK", True, White), (125, 60))
@@ -199,49 +197,34 @@ def draw_select():
 
     screen.blit(font_small.render("use ← → to browse then Enter To Play", True, White), (220, 380))
 
-#It displays another state of the game after selecting the chicks.
-#It fills the background and draws environmental objects such as water, fences, and bombs on the screen.
-def draw_game():
-    screen.fill(Levels[level_count]["bg_color"])
+def draw_gameover():
+    screen.fill(Grass)
+    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    screen.blit(overlay, (0, 0))
+    #for transparency
+    screen.blit(font_big.render("GAME OVER", True, Red), (250, 200))
+    screen.blit(font_medium.render("Press ENTER to retry or ESC for title", True, White), (170, 320))
 
-    #draw water
-    for water in waters:
-        screen.blit(images["water"], (int(water["x"]), int(water["y"])))
+def draw_won():
+    screen.fill(Grass)
+    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    screen.blit(overlay, (0, 0))
+    screen.blit(font_big.render("YOU WON", True, Sky), (275, 200))
+    screen.blit(font_medium.render("Press ENTER for next level or ESC for title", True, White), (170, 320))
 
-    #draw fences
-    for fence in fences:
-        screen.blit(images["fence"], (int(fence["x"]), int(fence["y"])))
+def draw_levelsdone():
+    screen.fill(Grass)
+    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    screen.blit(overlay, (0, 0))
+    screen.blit(font_big.render("Congrats! You WONNN:)", True, Sky), (200, 200))
+    screen.blit(font_medium.render("Press ENTER to go back to title", True, White), (275, 320))
 
-    #draw nest
-    screen.blit(images["nest"], (700, 60))
-
-    #draw bombs
-    for bomb in bombs:
-        if bomb["alive"]:
-            screen.blit(images["bomb"], (int(bomb["x"]), int(bomb["y"])))
-
-    #draw fox if level has one
-    if Levels[level_count]["has_fox"] and fox is not None:
-        screen.blit(images["fox"], (int(fox["x"]), int(fox["y"])))
-
-    #draw farmer if level has one
-    if Levels[level_count]["has_farmer"] and farmer is not None:
-        screen.blit(images["farmer"], (int(farmer["x"]), int(farmer["y"])))
-
-    #draw chicken
-    img = images[player["chick_id"]]
-    if not player["facing_left"]:
-        img = pygame.transform.flip(img, True, False)
-    screen.blit(img, (int(player["x"]), int(player["y"])))
-
-    #draw egg on chicken if carrying
-    if player["carrying_egg"]:
-        screen.blit(images["egg"], (int(player["x"]) + 40, int(player["y"]) - 10))
-
-#reference - https://www.youtube.com/watch?v=E82_hdoe06M, https://www.youtube.com/watch?v=pUEZbUAMZYA
-#displays HUD, the area where it shows health, hunger, energy bar stats.
-#This function will be called in main game loop to display them in every frames
 def draw_hud():
+    #reference - https://www.youtube.com/watch?v=E82_hdoe06M
+    #background bar
     pygame.draw.rect(screen, Dark_Gray, (0, 0, W, 50))
 
     #health bar
@@ -265,34 +248,6 @@ def draw_hud():
     pygame.draw.rect(screen, Sky, (610, 8, int(160 * time_ratio / 150), 16))
     screen.blit(font_small.render(f"Time Left  {int(level_timer)}", True, White), (610, 28))
 
-
-#draw "GAME OVER" when health = 0. It also displays text ENTER to retry or ESC to go back to the title.
-def draw_gameover():
-    screen.fill(Grass)
-    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 160))
-    screen.blit(overlay, (0, 0))
-    #for transparency
-    screen.blit(font_big.render("GAME OVER", True, Red), (250, 200))
-    screen.blit(font_medium.render("Press ENTER to retry or ESC for title", True, White), (170, 320))
-
-#displays "WON" when players complete the level. It also displays ENTER to retry or ESC to go back to the title.
-def draw_won():
-    screen.fill(Grass)
-    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 160))
-    screen.blit(overlay, (0, 0))
-    screen.blit(font_big.render("YOU WON", True, Sky), (275, 200))
-    screen.blit(font_medium.render("Press ENTER for next level or ESC for title", True, White), (170, 320))
-
-#displays "WON" when players complete all the level and ENTER to go back to the title.
-def draw_levelsdone():
-    screen.fill(Grass)
-    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 160))
-    screen.blit(overlay, (0, 0))
-    screen.blit(font_big.render("Congrats! You WONNN:)", True, Sky), (200, 200))
-    screen.blit(font_medium.render("Press ENTER to go back to title", True, White), (275, 320))
 
 def draw_game():
     screen.fill(Levels[level_count]["bg_color"])
@@ -588,9 +543,9 @@ def move_farmer() -> None:
     if farmer is None:
         return
     farmer["x"] += farmer["speed"] * farmer["direction"]
-    if farmer["x"] <= 0 or farmer["x"] >= W - 60:
+    if farmer["x"] <= 0 or farmer["x"] >= W - 60: #again to avoid farmer to move further the border
         farmer["direction"] *= -1
-    if farmer["hit_cooldown"] > 0:
+    if farmer["hit_cooldown"] > 0: #cooldown if the farmer hits the chicken to
         farmer["hit_cooldown"] = max(0.0, farmer["hit_cooldown"] - dt)
 
 def take_bomb_damage():
@@ -600,16 +555,18 @@ def take_bomb_damage():
             chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
             bomb_rect    = pygame.Rect(bomb["x"],   bomb["y"],   20, 20)
             if chicken_rect.colliderect(bomb_rect):
-                bomb["alive"] = False
-                player["health"] = max(0, player["health"] - bomb["damage"])
-                pop_up_message(f"BOOM! -{bomb['damage']} health!")
+                bomb["alive"] = False #if the bomb is active and the chick hits it
+                #it will take in the damage that has been preset to -30 health
+                player["health"] -= 30
+                pop_up_message("BOOM! -20 health!")
 
 #main game loop
 def pop_up_message(message):
     global popup_msg, popup_timer
     popup_msg   = message
-    popup_timer = 2.0
+    popup_timer = 2.0 #pop up message will last 2 sec
 
+#used in order to prevent repeating this after every state = "play"
 def level_setup():
     global player, bombs, waters, fences, fox, farmer, level_timer
     player = make_player()
@@ -621,32 +578,43 @@ def level_setup():
     farmer = make_farmer() if Levels[level_count]["has_farmer"] else None
 
 
+#title -> select chick -> levels[1-5]
 def start_game():
+    #to modify the variables outside this function.
     global state, player, dt, selected_chick, popup_timer, popup_msg, Levels, level_timer, level_count
     global bombs, waters, fences, fox, farmer
     level_count = 0
 
     while True:
+        #To keep the game running until the player quiets
+        #we will use dt - the delta time to conver miliseconds to seconds and to also make sure the game runs smoothly
         dt = clock.tick(FPS) / 1000.0
 
+        #we will check all possible events of what the player will click onto
         for event in pygame.event.get():
+            #if th player decided to exit or quit the game it will close the game window and quit safely without any errors
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-            if event.type == pygame.KEYDOWN:
-
+            if event.type == pygame.KEYDOWN: #for enter or return
+                #depnedig on the state of the game, if enter is pressed when player is on title page
+                #it will take the player to the select chick page
                 if state == "title":
                     if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
                         state = "select"
-
+                #when they have entered the select page
                 elif state == "select":
+                    #this will allow the player to go through each chickens that have been displayed using arrow keys.
+                    #only left to right
                     if event.key == pygame.K_LEFT:
                         selected_chick = (selected_chick - 1) % len(Players)
                     if event.key == pygame.K_RIGHT:
                         selected_chick = (selected_chick + 1) % len(Players)
+                    #once player has selected the chick, they can press Enter to start the first level.
                     if event.key == pygame.K_RETURN:
                         level_timer = Levels[level_count]["time_limit"]
+                        #This will create the player, Spawns all the bombs, water, fences,and adds fox and farmer if the level has it
                         player = make_player()
                         bombs = [make_bomb() for i in range(Levels[level_count]["bomb_count"])]
                         waters = [make_water() for i in range(Levels[level_count]["water_count"])]
@@ -658,24 +626,27 @@ def start_game():
                             farmer = make_farmer()
                         else: farmer = None
                         state  = "play"
-
+                #This is for if the have won the gaem or not
                 elif state == "won":
+                    #if the won they have option to go back and enter to start new level
                     if event.key == pygame.K_RETURN:
-                        level_setup()
+                        level_setup() #need to be called to update the game stats
                         state = "play"
                     if event.key == pygame.K_ESCAPE:
-                        state = "title"
+                        state = "title" # back to title is the press esc
+                #game over screen
                 elif state == "over":
                     if event.key == pygame.K_RETURN:
-                        level_setup()
+                        level_setup() #resets and allows them to replay
                         state  = "play"
                     if event.key == pygame.K_ESCAPE:
-                        state = "title"
-                elif state == "levels_done":
+                        state = "title" #if the quit
+                elif state == "levels_done": #if all levels are done
                     if event.key == pygame.K_RETURN:
-                        state = "title"
+                        state = "title" #only possible option to go back and replay the whole game
 
-        if state == "play":
+        if state == "play": #everytime the player is playing
+            #below functions will be called to make the game logics work
             check_nest()
             move_player()
             drain_stats()
@@ -683,29 +654,31 @@ def start_game():
             check_water()
             take_bomb_damage()
 
+            #Moves the farmer and fox and checks wheter they collide with the player.
             if farmer is not None:
                 move_farmer()
                 check_farmer()
-
             if fox is not None:
                 make_fox_follow()
 
+            #real time countdown for both level and popups
             if popup_timer > 0:
                 popup_timer -= dt
-
             if level_timer >0:
                 level_timer -= dt
 
+            #if player delivers all eggs they win the level and go to next
             if player["eggs_delivered"] == Levels[level_count]["eggs_needed"]:
                 state = "won"
-                level_count += 1
+                level_count += 1 #to move to next level
                 if level_count >= len(Levels)-1:
-                    state = "levels_done"
+                    state = "levels_done" #once all level has been passed, levels done will be shown
                     level_count = 0
 
             elif player["health"] <= 0 or level_timer <= 0:
                 state = "over"
 
+        #for every state = it will call the function taht the state has been assigned
         if state == "title":
             draw_title()
         elif state == "select":
