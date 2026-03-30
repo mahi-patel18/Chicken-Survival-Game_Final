@@ -27,6 +27,7 @@ egg_cooldown = 7
 bombs  = []
 waters = []
 fences = []
+corns = []
 
 #popup message will be string
 popup_msg = "" #so we can store the possible messages for popup
@@ -41,6 +42,8 @@ level_timer = 0.0
 level_count = 0
 fox = None
 farmer = None
+corn_spawn_timer = 0
+corn_spawn_delay = random.randint(2000, 5000)  #2–5 seconds
 
 #all colors we will possibly be using
 White = (255, 255, 255)
@@ -86,7 +89,7 @@ Levels = [
         "bomb_count": 3,
         "fence_count": 3,
         "water_count": 2,
-        "corn_max": 5,
+        "corn_max": 4,
         "bg_color": Grass,
     },
     {
@@ -99,7 +102,7 @@ Levels = [
         "bomb_count": 10,
         "fence_count": 3,
         "water_count": 5,
-        "corn_max": 5,
+        "corn_max": 3,
         "bg_color": Grass,
     },
     {
@@ -112,7 +115,7 @@ Levels = [
         "bomb_count": 12,
         "fence_count": 4,
         "water_count": 5,
-        "corn_max": 5,
+        "corn_max": 2,
         "bg_color": Grass,
     },
     {
@@ -125,7 +128,7 @@ Levels = [
         "bomb_count": 12,
         "fence_count": 4,
         "water_count": 5,
-        "corn_max": 5,
+        "corn_max": 2,
         "bg_color": Grass,
     },
     {
@@ -138,7 +141,7 @@ Levels = [
         "bomb_count": 15,
         "fence_count": 4,
         "water_count": 5,
-        "corn_max": 5,
+        "corn_max": 1,
         "bg_color": Grass,
     }
 ]
@@ -267,6 +270,11 @@ def draw_game():
     for bomb in bombs:
         if bomb["alive"]:
             screen.blit(images["bomb"], (int(bomb["x"]), int(bomb["y"])))
+
+    #draw corn
+    for corn in corns:
+        if corn["alive"]:
+            screen.blit(images["corn"], (int(corn["x"]), int(corn["y"])))
 
     #draw fox if level has one
     if Levels[level_count]["has_fox"] and fox is not None:
@@ -400,38 +408,16 @@ def drain_stats():
         player["egg_timer"] = 0.0
         try_lay_eggs()
 
-def try_lay_eggs():
-    global player
-    #chicken cannot lay an egg if it holding one, so this will check if the chickenhas an egg or not
-    if player["carrying_egg"]:
-        pop_up_message("Already carrying an egg!")
-        return
-    #too avoid making the game be more easy, we need a cooldown so the eggs arent laid in one go
-    if player["egg_cooldown"] > 0:
-        pop_up_message(f"Cooldown: {int(player['egg_cooldown'])}s")
-        return
-    #1st condition, chicken must have 50+ to lay an egg
-    if player["hunger"] < 50:
-        pop_up_message("Need 50+ hunger to lay!")
-        return
-    #2nd condition, chicken must have 70+ to lay an egg
-    if (player["energy"] < 70):
-        pop_up_message("Need 70+ energy to lay!")
-        return
-    #so once they have an egg, carrying egg becomes true
-    player["carrying_egg"] = True
-    #once laid, the stats must be drained in order to make it more difficult
-    player["hunger"] = max(0.0, player["hunger"] - 10.0)
-    player["energy"] = max(0.0, player["energy"] - 15.0)
-    player["egg_cooldown"] = float(egg_cooldown)
-    pop_up_message("Egg laid! NOW bring it to the nest!")
-
 #items + collisions
-def spawn_corn():
-    pass
 
-def disappear_corn():
-    pass
+def make_corn():
+    return {
+        "x": random.randint(100, W - 100),  # spawns randomly
+        "y": random.randint(100, H - 100),
+        "alive": True,  # too check if the corn is active or not
+        "hunger": 10, # once the player collects a corn then it gain hunger points by 10
+        "timer": 420 #7 sec for the 60 FPS 60*7 = 420
+    }
 
 def make_water():
     return {
@@ -560,6 +546,57 @@ def take_bomb_damage():
                 player["health"] -= 30
                 pop_up_message("BOOM! -20 health!")
 
+def spawn_corn(): #very similar to bomb except hunger is gained
+    global player, corns
+    #this is for it to appear randomly and disappear
+    if random.randint(1, 900) == 1:
+        corns.append(make_corn())
+
+    for corn in corns:
+        corn["timer"] -= 1 #every frame per sec the timer decreases
+
+        if corn["timer"] <= 0: #once it hits the timer
+            corns.remove(corn) #it will remove the corn
+            continue #this will skip the loop and go to the next item
+
+        if corn["alive"]:
+            chicken_rect = pygame.Rect(player["x"], player["y"], 60, 60)
+            corn_rect    = pygame.Rect(corn["x"],   corn["y"],   35, 50)
+            if chicken_rect.colliderect(corn_rect):
+                corn["alive"] = False
+                if player["hunger"] < 100:
+                    player["hunger"] = min(100, player["hunger"] + corn["hunger"])
+                    corn["alive"] = False
+                else:
+                    pop_up_message("Hunger is full already!")
+        if not corn["alive"]:
+            corns.remove(corn)
+
+def try_lay_eggs():
+    global player
+    #chicken cannot lay an egg if it holding one, so this will check if the chickenhas an egg or not
+    if player["carrying_egg"]:
+        pop_up_message("Already carrying an egg!")
+        return
+    #too avoid making the game be more easy, we need a cooldown so the eggs arent laid in one go
+    if player["egg_cooldown"] > 0:
+        pop_up_message(f"Cooldown: {int(player['egg_cooldown'])}s")
+        return
+    #1st condition, chicken must have 50+ to lay an egg
+    if player["hunger"] < 50:
+        pop_up_message("Need 50+ hunger to lay!")
+        return
+    #2nd condition, chicken must have 70+ to lay an egg
+    if (player["energy"] < 70):
+        pop_up_message("Need 70+ energy to lay!")
+        return
+    #so once they have an egg, carrying egg becomes true
+    player["carrying_egg"] = True
+    #once laid, the stats must be drained in order to make it more difficult
+    player["hunger"] = max(0.0, player["hunger"] - 15.0)
+    player["energy"] = max(0.0, player["energy"] - 20.0)
+    player["egg_cooldown"] = float(egg_cooldown)
+
 #main game loop
 def pop_up_message(message):
     global popup_msg, popup_timer
@@ -568,10 +605,11 @@ def pop_up_message(message):
 
 #used in order to prevent repeating this after every state = "play"
 def level_setup():
-    global player, bombs, waters, fences, fox, farmer, level_timer
+    global player, bombs, waters, fences, fox, farmer, level_timer, corns
     player = make_player()
     bombs = [make_bomb() for _ in range(Levels[level_count]["bomb_count"])] #for _ in range - not interested in how many times it will loop
     waters = [make_water() for _ in range(Levels[level_count]["water_count"])]
+    corns = [make_corn() for _ in range(Levels[level_count]["corn_max"])]
     fences = [make_fence() for _ in range(Levels[level_count]["fence_count"])]
     level_timer = float(Levels[level_count]["time_limit"])
     fox = make_fox() if Levels[level_count]["has_fox"] else None
@@ -582,7 +620,7 @@ def level_setup():
 def start_game():
     #to modify the variables outside this function.
     global state, player, dt, selected_chick, popup_timer, popup_msg, Levels, level_timer, level_count
-    global bombs, waters, fences, fox, farmer
+    global bombs, waters, fences, fox, farmer, corns
     level_count = 0
 
     while True:
@@ -619,6 +657,7 @@ def start_game():
                         bombs = [make_bomb() for i in range(Levels[level_count]["bomb_count"])]
                         waters = [make_water() for i in range(Levels[level_count]["water_count"])]
                         fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
+                        corns = [make_corn() for i in range(Levels[level_count]["corn_max"])]
                         if Levels[level_count]["has_fox"]:
                             fox = make_fox()
                         else: fox = None
@@ -653,6 +692,7 @@ def start_game():
             check_fence()
             check_water()
             take_bomb_damage()
+            spawn_corn()
 
             #Moves the farmer and fox and checks wheter they collide with the player.
             if farmer is not None:
