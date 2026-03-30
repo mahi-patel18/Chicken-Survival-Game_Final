@@ -4,55 +4,64 @@ import random
 
 pygame.init()
 
-#possible Screen size?
+#possible Screen size, it will be measured in pixel by pixel size
 W = 800  #game width in pixels
 H = 600  #game height in pixels
-FPS = 60  #frames per second
+FPS = 60  #frames per second for real time movement
 
-screen = pygame.display.set_mode((W, H))  #opens the game window
-pygame.display.set_caption("Chicken Survival Game")  #sets the title bar text
-clock = pygame.time.Clock()  #controls the FPS
+screen = pygame.display.set_mode((W, H))  #called to open the game window
+pygame.display.set_caption("Chicken Survival Game") #sets the title bar text, so when run, it will the title beside the cross button
+clock = pygame.time.Clock()  #controls the FPS to avoid lagging
 
 #this will be the basic stats needed
-PLAYER_SPEED  = 180
-PLAYER_HEALTH = 100
-PLAYER_HUNGER = 100
-PLAYER_ENERGY = 100
-EGG_COOLDOWN  = 7
+#planning
+player_speed = 180
+player_health = 100
+player_hunger = 100
+player_energy = 100
+egg_cooldown = 7
 
 #items that we need more than one
+#each level will have different amount of the items below so it will be a list
 bombs  = []
 waters = []
 fences = []
 
-popup_msg   = ""
-popup_timer = 0.0
+#popup message will be string
+popup_msg = "" #so we can store the possible messages for popup
+popup_timer = 0.0 #popup is temporary, we need this to control how long it will stay on the screen for
 
-state          = "title"
-player         = None
-dt             = 0.0
+#stores the starting game's stats, they will be updated depending on each levels.
+state = "title"
+player = None
+dt = 0.0
 selected_chick = 0
-level_timer    = 0.0
-level_count    = 0
-fox            = None
-farmer         = None
+level_timer = 0.0
+level_count = 0
+fox = None
+farmer = None
 
-#all colors we will possibly use
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (220, 50, 50)  #Health bar
-YELLOW = (245, 230, 50)  #Energy warning
-ORANGE = (230, 130, 40)  #Hunger warning
-GREEN = (80, 180, 80)
-DARK_GREEN = (40, 120, 40)
-SKY = (135, 206, 235)
-GRASS = (126, 200, 80)
-BROWN = (160, 100, 50)
-GRAY = (150, 150, 150)
-DARK_GRAY = (50, 50, 50)  #HUD background
-PINK = (225, 127, 162)
+#all colors we will possibly be using
+White = (255, 255, 255)
+Black = (0, 0, 0)
+Red = (220, 50, 50)  #use this for Health bar
+Yellow = (245, 230, 50)  #use this for Energy warning
+Orange = (230, 130, 40)  #use this for Hunger warning
+Green = (80, 180, 80)
+Dark_green = (40, 120, 40)
+Sky = (135, 206, 235) #this should be for the title screen
+Grass = (126, 200, 80)
+Brown = (160, 100, 50)
+Gray = (150, 150, 150)
+Gray_2 = (80, 80, 80)
+Dark_Gray = (50, 50, 50)  #use this for HUD background
+Pink = (225, 127, 162) #testing
 
 #to easily access the data for all the chickens
+#as we want the game to allow the player to select their chick
+#player should be list
+#each player should have a unique id, the name it will display when we show the display page
+#the image is there so we can easily load the imahes
 Players = [
     {"id": "mahi",   "name": "Mahi Chick",   "image": "mahi.png"},
     {"id": "hilly",  "name": "Hilly Chick",  "image": "hilly.png"},
@@ -62,8 +71,12 @@ Players = [
 ]
 
 #for now - 5 levels, we can change the timer and other counts too
+#dictionaries for levels
+#each dictionary is 1 level
+#this allows us to manage the difficulty of the game in each level and what we want
 Levels = [
     {
+        #easy 1
         "level": 1,
         "eggs_needed": 1,
         "time_limit": 120,
@@ -73,9 +86,10 @@ Levels = [
         "fence_count": 3,
         "water_count": 2,
         "corn_max": 5,
-        "bg_color": GRASS,
+        "bg_color": Grass,
     },
     {
+        #easy 2
         "level": 2,
         "eggs_needed": 2,
         "time_limit": 120,
@@ -85,9 +99,10 @@ Levels = [
         "fence_count": 3,
         "water_count": 5,
         "corn_max": 5,
-        "bg_color": GRASS,
+        "bg_color": Grass,
     },
     {
+        #slightly hard
         "level": 3,
         "eggs_needed": 3,
         "time_limit": 100,
@@ -97,9 +112,10 @@ Levels = [
         "fence_count": 4,
         "water_count": 5,
         "corn_max": 5,
-        "bg_color": GRASS,
+        "bg_color": Grass,
     },
     {
+        #hard
         "level": 4,
         "eggs_needed": 4,
         "time_limit": 80,
@@ -109,9 +125,10 @@ Levels = [
         "fence_count": 4,
         "water_count": 5,
         "corn_max": 5,
-        "bg_color": GRASS,
+        "bg_color": Grass,
     },
     {
+        #super hard
         "level": 5,
         "eggs_needed": 5,
         "time_limit": 60,
@@ -121,105 +138,114 @@ Levels = [
         "fence_count": 4,
         "water_count": 5,
         "corn_max": 5,
-        "bg_color": GRASS,
+        "bg_color": Grass,
     }
 ]
 
 #loads all the images that we will be using in the game
+#reference https://www.geeksforgeeks.org/python/python-display-images-with-pygame/
 def load_image(filename, w, h):
     image = pygame.image.load("Images/" + filename).convert_alpha()
     return pygame.transform.scale(image, (w, h))
 
+#instead of loading images everytime, this will easily helps us acces the imges
 images = {
+    #players
     "mahi":   load_image("mahi.png",    60, 60),
     "hilly":  load_image("hilly.png",   60, 60),
     "august": load_image("august.png",  60, 60),
     "leo":    load_image("leo.png",     60, 60),
     "raj":    load_image("raj.png",     60, 60),
+
+    #items and obstacles
     "corn":   load_image("corn.png",    35, 50),
     "egg":    load_image("egg.png",     30, 30),
     "nest":   load_image("nest.png",    90, 44),
     "water":  load_image("water.png",   80, 52),
     "fence":  load_image("fence.png",   90, 63),
-    "bomb":   load_image("bomb.png",    20, 20),
+    "bomb":   load_image("bomb.png",    20, 20), #slightly small but will be easy to add multiple of them
     "fox":    load_image("fox.png",     60, 70),
     "farmer": load_image("farmer.png",  60, 80),
 }
 
 #font sizes
+#use basic font Arial
 font_big    = pygame.font.SysFont("Arial", 48, bold=True)
 font_medium = pygame.font.SysFont("Arial", 22, bold=True)
 font_small  = pygame.font.SysFont("Arial", 16)
 
+#for screen.blit - https://www.geeksforgeeks.org/python/pygame-surface-blit-function/
+#https://gjenkinsedu.com/post/pygame_surface_blit_0005/
 def draw_title():
-    screen.fill(SKY)
-    screen.blit(font_big.render("CHICKEN Survival GAME", True, WHITE), (200, 200))
-    screen.blit(font_medium.render("Press ENTER to start", True, WHITE), (250, 320))
+    screen.fill(Sky)
+    screen.blit(font_big.render("Chicken Survival Game", True, White), (140, 200))
+    screen.blit(font_medium.render("Press ENTER to start", True, White), (270, 320))
 
 def draw_select():
-    screen.fill(SKY)
-    screen.blit(font_big.render("CHOOSE YOUR CHICK", True, WHITE), (125, 60))
+    screen.fill(Sky)
+    screen.blit(font_big.render("CHOOSE YOUR CHICK", True, White), (125, 60))
 
     chicks_position = [80, 210, 340, 470, 600]
 
     for i, chick in enumerate(Players):
         #goes through every players
         if i == selected_chick:
-            pygame.draw.rect(screen, WHITE, (chicks_position[i] - 40, 150, 80, 80), 3)
+            pygame.draw.rect(screen, White, (chicks_position[i] - 40, 150, 80, 80), 3)
         screen.blit(images[chick["id"]], (chicks_position[i] - 30, 160))
-        screen.blit(font_small.render(chick["name"], True, WHITE), (chicks_position[i] - 30, 260))
+        screen.blit(font_small.render(chick["name"], True, White), (chicks_position[i] - 30, 260))
 
-    screen.blit(font_small.render("use ← → to browse then Enter To Play", True, WHITE), (220, 380))
+    screen.blit(font_small.render("use ← → to browse then Enter To Play", True, White), (220, 380))
 
 def draw_gameover():
-    screen.fill(GRASS)
+    screen.fill(Grass)
     overlay = pygame.Surface((W, H), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 160))
     screen.blit(overlay, (0, 0))
     #for transparency
-    screen.blit(font_big.render("GAME OVER", True, RED), (250, 200))
-    screen.blit(font_medium.render("Press ENTER to retry or ESC for title", True, WHITE), (170, 320))
+    screen.blit(font_big.render("GAME OVER", True, Red), (250, 200))
+    screen.blit(font_medium.render("Press ENTER to retry or ESC for title", True, White), (170, 320))
 
 def draw_won():
-    screen.fill(GRASS)
+    screen.fill(Grass)
     overlay = pygame.Surface((W, H), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 160))
     screen.blit(overlay, (0, 0))
-    screen.blit(font_big.render("YOU WON", True, SKY), (275, 200))
-    screen.blit(font_medium.render("Press ENTER for next level or ESC for title", True, WHITE), (170, 320))
+    screen.blit(font_big.render("YOU WON", True, Sky), (275, 200))
+    screen.blit(font_medium.render("Press ENTER for next level or ESC for title", True, White), (170, 320))
 
 def draw_levelsdone():
-    screen.fill(GRASS)
+    screen.fill(Grass)
     overlay = pygame.Surface((W, H), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 160))
     screen.blit(overlay, (0, 0))
-    screen.blit(font_big.render("Congrats! You WONNN:)", True, SKY), (200, 200))
-    screen.blit(font_medium.render("Press ENTER to go back to title", True, WHITE), (275, 320))
+    screen.blit(font_big.render("Congrats! You WONNN:)", True, Sky), (200, 200))
+    screen.blit(font_medium.render("Press ENTER to go back to title", True, White), (275, 320))
 
 def draw_hud():
+    #reference - https://www.youtube.com/watch?v=E82_hdoe06M
     #background bar
-    pygame.draw.rect(screen, DARK_GRAY, (0, 0, W, 50))
+    pygame.draw.rect(screen, Dark_Gray, (0, 0, W, 50))
 
     #health bar
-    pygame.draw.rect(screen, (80, 80, 80), (10, 8, 160, 16))
-    pygame.draw.rect(screen, GREEN,          (10, 8, int(160 * player["health"] / 100), 16))
-    screen.blit(font_small.render(f"HP  {int(player['health'])}", True, WHITE), (10, 28))
+    pygame.draw.rect(screen, Gray_2, (10, 8, 160, 16))
+    pygame.draw.rect(screen, Green,(10, 8, int(160 * player["health"] / 100), 16))
+    screen.blit(font_small.render(f"HP{int(player['health'])}", True, White), (10, 28))
 
     #hunger bar
-    pygame.draw.rect(screen, (80, 80, 80), (210, 8, 160, 16))
-    pygame.draw.rect(screen, ORANGE,       (210, 8, int(160 * player["hunger"] / 100), 16))
-    screen.blit(font_small.render(f"Hunger  {int(player['hunger'])}", True, WHITE), (210, 28))
+    pygame.draw.rect(screen, Gray_2, (210, 8, 160, 16))
+    pygame.draw.rect(screen, Orange,(210, 8, int(160 * player["hunger"] / 100), 16))
+    screen.blit(font_small.render(f"Hunger{int(player['hunger'])}", True, White),(210, 28))
 
     #energy bar
-    pygame.draw.rect(screen, (80, 80, 80), (410, 8, 160, 16))
-    pygame.draw.rect(screen, YELLOW,       (410, 8, int(160 * player["energy"] / 100), 16))
-    screen.blit(font_small.render(f"Energy  {int(player['energy'])}", True, WHITE), (410, 28))
+    pygame.draw.rect(screen, Gray_2, (410, 8, 160, 16))
+    pygame.draw.rect(screen, Yellow, (410, 8, int(160 * player["energy"] / 100), 16))
+    screen.blit(font_small.render(f"Energy{int(player['energy'])}", True, White),(410, 28))
 
     #level timer
-    pygame.draw.rect(screen, (80, 80, 80), (610, 8, 160, 16))
+    pygame.draw.rect(screen, Gray_2, (610, 8, 160, 16))
     time_ratio = max(0, level_timer / Levels[level_count]["time_limit"])
-    pygame.draw.rect(screen, SKY, (610, 8, int(160 * time_ratio / 150), 16))
-    screen.blit(font_small.render(f"Time Left  {int(level_timer)}", True, WHITE), (610, 28))
+    pygame.draw.rect(screen, Sky, (610, 8, int(160 * time_ratio / 150), 16))
+    screen.blit(font_small.render(f"Time Left  {int(level_timer)}", True, White), (610, 28))
 
 
 def draw_game():
@@ -263,7 +289,7 @@ def draw_game():
     draw_hud()
 
     if popup_timer > 0 and popup_msg:
-        txt = font_medium.render(popup_msg, True, WHITE)
+        txt = font_medium.render(popup_msg, True, White)
         bg  = pygame.Surface((txt.get_width() + 20, 36), pygame.SRCALPHA)
         bg.fill((0, 0, 0, 180))
         screen.blit(bg,  (W // 2 - bg.get_width()  // 2, H // 2 - 18))
@@ -391,7 +417,7 @@ def try_lay_eggs():
     player["carrying_egg"] = True
     player["hunger"] = max(0.0, player["hunger"] - 10.0)
     player["energy"] = max(0.0, player["energy"] - 15.0)
-    player["egg_cooldown"] = float(EGG_COOLDOWN)
+    player["egg_cooldown"] = float(egg_cooldown)
     pop_up_message("Egg laid! NOW bring it to the nest!")
 
 #items + collisions
