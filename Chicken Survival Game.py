@@ -666,17 +666,6 @@ def start_game():
                         level_timer = Levels[level_count]["time_limit"]
                         #This will create the player, Spawns all the bombs, water, fences,and adds fox and farmer if the level has it
                         level_setup()
-                        #player = make_player()
-                        #bombs = [make_bomb() for i in range(Levels[level_count]["bomb_count"])] #Levels[level_count] spawn different conditions based on which level the player is at
-                        #waters = [make_water() for i in range(Levels[level_count]["water_count"])]
-                        #fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
-                        #corns = [make_corn() for i in range(Levels[level_count]["corn_max"])]
-                        #if Levels[level_count]["has_fox"]:
-                        #    fox = make_fox()
-                        #else: fox = None
-                        #if Levels[level_count]["has_farmer"]:
-                        #    farmer = make_farmer()
-                        #else: farmer = None
                         state  = "play"
                 #This is for if the have won the gaem or not
                 elif state == "won":
