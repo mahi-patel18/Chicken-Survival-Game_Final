@@ -264,23 +264,23 @@ def draw_hud():
     #health bar
     pygame.draw.rect(screen, Gray_2, (10, 8, 160, 16))
     pygame.draw.rect(screen, Green,(10, 8, int(160 * player["health"] / 100), 16))
-    screen.blit(font_small.render(f"HP{int(player['health'])}", True, White), (10, 28))
+    screen.blit(font_small.render(f"HP {int(player['health'])}", True, White), (10, 28))
 
     #hunger bar
     pygame.draw.rect(screen, Gray_2, (210, 8, 160, 16))
     pygame.draw.rect(screen, Orange,(210, 8, int(160 * player["hunger"] / 100), 16))
-    screen.blit(font_small.render(f"Hunger{int(player['hunger'])}", True, White),(210, 28))
+    screen.blit(font_small.render(f"Hunger {int(player['hunger'])}", True, White),(210, 28))
 
     #energy bar
     pygame.draw.rect(screen, Gray_2, (410, 8, 160, 16))
     pygame.draw.rect(screen, Yellow, (410, 8, int(160 * player["energy"] / 100), 16))
-    screen.blit(font_small.render(f"Energy{int(player['energy'])}", True, White),(410, 28))
+    screen.blit(font_small.render(f"Energy {int(player['energy'])}", True, White),(410, 28))
 
     #level timer
     pygame.draw.rect(screen, Gray_2, (610, 8, 160, 16))
     #time_ratio = max(0, int(level_timer / Levels[level_count]["time_limit"]))
     pygame.draw.rect(screen, Sky, (610, 8, int(160 * level_timer / Levels[level_count]["time_limit"]), 16))
-    screen.blit(font_small.render(f"Time Left  {int(level_timer)}", True, White), (610, 28))
+    screen.blit(font_small.render(f"Time Left {int(level_timer)}", True, White), (610, 28))
 
 
 #draw "GAME OVER" when health = 0. It also displays text ENTER to retry or ESC to go back to the title.
