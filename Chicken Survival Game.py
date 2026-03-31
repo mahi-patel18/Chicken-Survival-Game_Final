@@ -713,7 +713,7 @@ def start_game():
             if player["eggs_delivered"] == Levels[level_count]["eggs_needed"]:
                 state = "won"
                 level_count += 1 #to move to next level
-                if level_count >= len(Levels)-1:
+                if level_count >= len(Levels):
                     state = "levels_done" #once all level has been passed, levels done will be shown
                     level_count = 0
 
