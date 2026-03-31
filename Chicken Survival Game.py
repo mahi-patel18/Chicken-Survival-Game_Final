@@ -115,7 +115,7 @@ Levels = [
         "bomb_count": 12,
         "fence_count": 4,
         "water_count": 5,
-        "corn_max": 2,
+        "corn_max": 3,
         "bg_color": Grass,
     },
     {
@@ -216,6 +216,10 @@ def draw_game():
     for fence in fences:
         screen.blit(images["fence"], (int(fence["x"]), int(fence["y"])))
 
+    #draws corn
+    for corn in corns:
+        screen.blit(images["corn"], (int(corn["x"]), int(corn["y"])))
+
     #draw nest
     screen.blit(images["nest"], (700, 60))
 
@@ -242,8 +246,17 @@ def draw_game():
     if player["carrying_egg"]:
         screen.blit(images["egg"], (int(player["x"]) + 40, int(player["y"]) - 10))
 
+    if popup_timer > 0 and popup_msg:
+        txt = font_medium.render(popup_msg, True, White)
+        bg  = pygame.Surface((txt.get_width() + 20, 36), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 180))
+        screen.blit(bg,  (W // 2 - bg.get_width()  // 2, H // 2 - 18))
+        screen.blit(txt, (W // 2 - txt.get_width() // 2, H // 2 - 10))
+
+    draw_hud()
+
 #reference - https://www.youtube.com/watch?v=E82_hdoe06M, https://www.youtube.com/watch?v=pUEZbUAMZYA
-#displays HUD, the area where it shows health, hunger, energy bar stats.
+#displays HUD, the area where it shows health, hunger, energy bar stats and timer.
 #This function will be called in main game loop to display them in every frames
 def draw_hud():
     pygame.draw.rect(screen, Dark_Gray, (0, 0, W, 50))
@@ -265,8 +278,8 @@ def draw_hud():
 
     #level timer
     pygame.draw.rect(screen, Gray_2, (610, 8, 160, 16))
-    time_ratio = max(0, level_timer / Levels[level_count]["time_limit"])
-    pygame.draw.rect(screen, Sky, (610, 8, int(160 * time_ratio / 150), 16))
+    #time_ratio = max(0, int(level_timer / Levels[level_count]["time_limit"]))
+    pygame.draw.rect(screen, Sky, (610, 8, int(160 * level_timer / Levels[level_count]["time_limit"]), 16))
     screen.blit(font_small.render(f"Time Left  {int(level_timer)}", True, White), (610, 28))
 
 
@@ -295,19 +308,13 @@ def draw_levelsdone():
     overlay = pygame.Surface((W, H), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 160))
     screen.blit(overlay, (0, 0))
-    screen.blit(font_big.render("Congrats! You WONNN:)", True, Sky), (200, 200))
-    screen.blit(font_medium.render("Press ENTER to go back to title", True, White), (275, 320))
+    screen.blit(font_big.render("Congrats! You WONNN:)", True, Sky), (120, 200))
+    screen.blit(font_medium.render("Press ENTER to go back to title", True, White), (230, 320))
 
 
     #draws hud
     draw_hud()
 
-    if popup_timer > 0 and popup_msg:
-        txt = font_medium.render(popup_msg, True, White)
-        bg  = pygame.Surface((txt.get_width() + 20, 36), pygame.SRCALPHA)
-        bg.fill((0, 0, 0, 180))
-        screen.blit(bg,  (W // 2 - bg.get_width()  // 2, H // 2 - 18))
-        screen.blit(txt, (W // 2 - txt.get_width() // 2, H // 2 - 10))
 
 def make_player():
     #what every player will have at the start
@@ -549,7 +556,7 @@ def take_bomb_damage():
                 bomb["alive"] = False #if the bomb is active and the chick hits it
                 #it will take in the damage that has been preset to -30 health
                 player["health"] -= 30
-                pop_up_message("BOOM! -20 health!")
+                pop_up_message("BOOM! -30 health!")
 
 def spawn_corn(): #very similar to bomb except hunger is gained
     global player, corns
@@ -608,14 +615,14 @@ def pop_up_message(message):
     popup_msg   = message
     popup_timer = 2.0 #pop up message will last 2 sec
 
-#used in order to prevent repeating this after every state = "play"
+#to prevent repeating this after every state = "play"
 def level_setup():
     global player, bombs, waters, fences, fox, farmer, level_timer, corns
     player = make_player()
-    bombs = [make_bomb() for _ in range(Levels[level_count]["bomb_count"])] #for _ in range - not interested in how many times it will loop
-    waters = [make_water() for _ in range(Levels[level_count]["water_count"])]
-    corns = [make_corn() for _ in range(Levels[level_count]["corn_max"])]
-    fences = [make_fence() for _ in range(Levels[level_count]["fence_count"])]
+    bombs = [make_bomb() for i in range(Levels[level_count]["bomb_count"])] #for _ in range - not interested in how many times it will loop
+    waters = [make_water() for i in range(Levels[level_count]["water_count"])]
+    corns = [make_corn() for i in range(Levels[level_count]["corn_max"])]
+    fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
     level_timer = float(Levels[level_count]["time_limit"])
     fox = make_fox() if Levels[level_count]["has_fox"] else None
     farmer = make_farmer() if Levels[level_count]["has_farmer"] else None
@@ -658,21 +665,22 @@ def start_game():
                     if event.key == pygame.K_RETURN:
                         level_timer = Levels[level_count]["time_limit"]
                         #This will create the player, Spawns all the bombs, water, fences,and adds fox and farmer if the level has it
-                        player = make_player()
-                        bombs = [make_bomb() for i in range(Levels[level_count]["bomb_count"])]
-                        waters = [make_water() for i in range(Levels[level_count]["water_count"])]
-                        fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
-                        corns = [make_corn() for i in range(Levels[level_count]["corn_max"])]
-                        if Levels[level_count]["has_fox"]:
-                            fox = make_fox()
-                        else: fox = None
-                        if Levels[level_count]["has_farmer"]:
-                            farmer = make_farmer()
-                        else: farmer = None
+                        level_setup()
+                        #player = make_player()
+                        #bombs = [make_bomb() for i in range(Levels[level_count]["bomb_count"])] #Levels[level_count] spawn different conditions based on which level the player is at
+                        #waters = [make_water() for i in range(Levels[level_count]["water_count"])]
+                        #fences = [make_fence() for i in range(Levels[level_count]["fence_count"])]
+                        #corns = [make_corn() for i in range(Levels[level_count]["corn_max"])]
+                        #if Levels[level_count]["has_fox"]:
+                        #    fox = make_fox()
+                        #else: fox = None
+                        #if Levels[level_count]["has_farmer"]:
+                        #    farmer = make_farmer()
+                        #else: farmer = None
                         state  = "play"
                 #This is for if the have won the gaem or not
                 elif state == "won":
-                    #if the won they have option to go back and enter to start new level
+                    #if they won they have option to go back and enter to start new level
                     if event.key == pygame.K_RETURN:
                         level_setup() #need to be called to update the game stats
                         state = "play"
@@ -712,7 +720,7 @@ def start_game():
             if level_timer >0:
                 level_timer -= dt
 
-            #if player delivers all eggs they win the level and go to next
+            #if player delivers all eggs they win the level and go to next level
             if player["eggs_delivered"] == Levels[level_count]["eggs_needed"]:
                 state = "won"
                 level_count += 1 #to move to next level
@@ -723,7 +731,7 @@ def start_game():
             elif player["health"] <= 0 or level_timer <= 0:
                 state = "over"
 
-        #for every state = it will call the function taht the state has been assigned
+        #for every state = it will call the appropriate draw function
         if state == "title":
             draw_title()
         elif state == "select":
